@@ -1,0 +1,224 @@
+@import url("Resets.css");
+@import url("Site-VerticalLayout.css") only screen and (max-width: 1000px);
+
+html { background: #7F7F7F; }
+
+body, td
+{
+  font-family: Verdana;
+  font-size: 94%;
+  padding: 1em;
+}
+
+p { padding-bottom: 1em; }
+
+div.Header
+{
+  text-align: center;
+  width: 100%;
+}
+
+div.HeaderContent
+{
+  margin: 0 auto;
+  position: relative;
+  text-align: center;
+}
+
+div.HeaderContent
+{
+  width: 68em;
+  left: -1.2em;
+}
+
+div.HeaderContent h1
+{
+  font-size: 200%;
+  margin: 1em 0 0 1em;
+  text-align: left;
+}
+div.HeaderContent h1 a,
+div.HeaderContent h1 a:active,
+div.HeaderContent h1 a:hover,
+div.HeaderContent h1 a:hover,
+div.HeaderContent h1 a:visited
+{
+  text-decoration: none;
+  color: #ADADAD;
+}
+
+div.HeaderContent span.Tagline
+{
+  display: block;
+  text-align: left;
+  margin-left: 2.2em;
+}
+
+div.Header
+{
+  color: white;
+  margin-bottom: 1em;
+}
+
+div.HeaderContent
+{
+  border: 0.25em solid #BCBCBC;
+  background: white;
+  min-height: 10em;
+  color: #121212;
+}
+
+div.WrapperOuter
+{
+  margin: 0 auto;
+  width: 67em;
+}
+
+div.Wrapper
+{
+  float: left;
+  width: 67em;
+}
+
+div.Main { float: left; }
+
+div.Content
+{
+  width: 51em;
+
+  margin-bottom: 1em;
+  padding: 1em;
+  padding-right: 3em;
+
+  border: 0.25em solid #C0C0C0;
+  background: white;
+  color: #121212;
+}
+
+div.NoResults { min-height: 10em; }
+
+div.Content a
+div.Content a:active,
+div.Content a:link,
+div.Content a:visited { color: #A8A8A8; }
+div.Content a:hover { color: #EEE; }
+
+div.Content em { font-style: italic; }
+div.Content strong { font-weight: bold; }
+
+div.Content ol, div.Content ul { margin: 0 1em 1.5em 2em; }
+div.Content ol li { list-style-type: decimal; }
+div.Content ul li { list-style-type: disc; }
+div.Content li { line-height: 1.8em; }
+
+/* Remove extra bottom spacing when lists are nested */
+div.Content ol ol,
+div.Content ul ol,
+div.Content ol ul,
+div.Content ul ul { margin-bottom: 0.0em; }
+
+div.Content div.Tags ul,
+div.Content div.Tags ul li { display: inline; }
+div.Content div.Tags ul { margin: 0; }
+div.Content div.Tags ul li
+{
+  list-style-type: none;
+  margin-left: 0.3em;
+}
+
+div.Content blockquote
+{
+  color: #666;
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+  padding-left: 0.5em;
+  border-left: 0.2em solid #CCC;
+  background: #F8F8F8;
+}
+
+div.Content blockquote p { padding: 0.3em 0 0.7em 0; }
+
+div.About,
+div.Recent,
+div.Featured,
+div.History
+{
+  float: right;
+  clear: right;
+  
+  position: relative;
+  left: -2.5em;
+  width: 10em;
+
+  border: 0.25em solid #B7B7B7;
+  background: #595959;
+  color: white;
+  padding: 0.5em;
+  margin: 0.5em 0;
+}
+
+div.About h2,
+div.Recent h2,
+div.Featured h2,
+div.History h2 { font-weight: bold; }
+
+div.About h2 { margin-bottom: 0.5em; }
+
+div.About ul li,
+div.Recent ul li,
+div.Featured ul li,
+div.History ul li
+{
+  /* Indent any wrapped lines */
+  text-indent: -0.5em;
+  margin-left: 0.5em;
+}
+div.Recent ul li,
+div.Featured ul li
+{
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+div.About a,
+div.Recent a,
+div.Featured a,
+div.History a
+{
+  color: #F1F1F1;
+  display: block;
+}
+
+div.About a:hover,
+div.Recent a:hover,
+div.Featured a:hover,
+div.History a:hover { color: #C0C0C0; }
+
+div.Content h2,
+div.Content h3,
+div.Content h4,
+div.Content h5,
+div.Content h6
+{
+  padding-bottom: 0.5em;
+  color: #A8A8A8;
+}
+div.Content h2 { font-size: 140%; }
+div.Content h3 { font-size: 120%; }
+div.Content h4 { font-size: 110%; }
+div.Content h5 { font-size: 105%; }
+
+div.Content h2 a { text-decoration: none; }
+
+div.Content h3.PostDate,
+div.Content p.PostTime { color: #BCBCBC; }
+div.Content p.PostTime { padding-bottom: 0.5em; }
+
+div.ErrorPageContent { float: left; }
+div.Content img.ErrorPage
+{
+  display: block;
+  float: left;
+  margin-right: 1em;
+  border: 0.1em solid #C0C0C0;
+}
