@@ -1,0 +1,40 @@
+﻿body div.Header { width: 100%; }
+
+body div.HeaderContent
+{
+  width: auto;
+  max-width: 68em;
+  left: 0;
+}
+
+body div.WrapperOuter
+{
+  margin: 0;
+  width: auto;
+}
+
+body div.Wrapper
+{
+  float: none;
+  width: auto;
+}
+
+body div.Main { float: none; }
+
+body div.Content
+{
+	width: auto;
+	max-width: 51em;
+}
+
+body div.About,
+body div.Recent,
+body div.Featured,
+body div.History
+{
+  float: none;
+  clear: none;
+  left: 0;
+  width: auto;
+  margin: 0.5em 0;
+}
