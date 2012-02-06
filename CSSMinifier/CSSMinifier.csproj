@@ -43,8 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileLoaders\ITextFileLoader.cs" />
     <Compile Include="FileLoaders\MinifyingCssLoader.cs" />
+    <Compile Include="FileLoaders\SimpleTextFileContentLoader.cs" />
     <Compile Include="ICache.cs" />
+    <Compile Include="PathMapping\IRelativePathMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileLoaders\TextFileContents.cs" />
   </ItemGroup>

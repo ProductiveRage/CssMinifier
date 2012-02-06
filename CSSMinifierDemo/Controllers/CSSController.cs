@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Web;
@@ -12,38 +13,53 @@ namespace CSSMinifierDemo.Controllers
 	{
 		public ActionResult Process()
 		{
-			var loader = new MinifyingCssLoader(
-				new NonExpiringASPNetCacheCache(HttpContext.Cache)
-			);
-			var content = loader.Load(
-				Server.MapPath(Request.FilePath),
-				TryToGetIfModifiedSinceDateFromRequest()
-			);
-			
-			if (content == null)
-				throw new Exception("Received null response from Css Loader - this should not happen");
-			
-			if (content.Status == MinifyingCssLoader.CSSContent.StatusOptions.Error)
+			var relativePathMapper = new ServerUtilityPathMapper(Server);
+			var relativePath = Request.FilePath;
+			var fullPath = relativePathMapper.MapPath(relativePath);
+			var file = new FileInfo(fullPath);
+			if (!file.Exists)
 			{
-				Response.StatusCode = 500;
-				Response.StatusDescription = "Error encountered";
-				return Content(content.Content, "text/css");
+				Response.StatusCode = 404;
+				Response.StatusDescription = "Not Found";
+				return Content("File not found: " + relativePath, "text/css");
 			}
-			
-			if (content.Status == MinifyingCssLoader.CSSContent.StatusOptions.NotModified)
+
+			var lastModifiedDateFromRequest = TryToGetIfModifiedSinceDateFromRequest();
+			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, file.LastWriteTime))
 			{
 				Response.StatusCode = 304;
 				Response.StatusDescription = "Not Modified";
 				return Content("", "text/css");
 			}
-			
-			if (content.Status == MinifyingCssLoader.CSSContent.StatusOptions.Success)
+
+			try
 			{
+				var loader = new MinifyingCssLoader(
+					new SimpleTextFileContentLoader(relativePathMapper),
+					new NonExpiringASPNetCacheCache(HttpContext.Cache)
+				);
+				var content = loader.Load(relativePath);
+				if (content == null)
+					throw new Exception("Received null response from Css Loader - this should not happen");
+				if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, file.LastWriteTime))
+				{
+					Response.StatusCode = 304;
+					Response.StatusDescription = "Not Modified";
+					return Content("", "text/css");
+				}
 				SetResponseCacheHeadersForSuccess(content.LastModified);
 				return Content(content.Content, "text/css");
 			}
-
-			throw new Exception("Unsupported CSSContent.StatusOptions value: " + content.Status);
+			catch (Exception e)
+			{
+				Response.StatusCode = 500;
+				Response.StatusDescription = "Internal Server Error";
+#if DEBUG
+				return Content("Error: " + e.StackTrace);
+#else
+				return Content("Error: " + e.Message);
+#endif
+			}
 		}
 
 		/// <summary>
@@ -60,6 +76,15 @@ namespace CSSMinifierDemo.Controllers
 				return lastModifiedDate;
 
 			return null;
+		}
+
+		/// <summary>
+		/// Dates from HTTP If-Modified-Since headers are only precise to whole seconds while files' LastWriteTime are granular to milliseconds, so when
+		/// comparing them a small grace period is required
+		/// </summary>
+		private bool AreDatesApproximatelyEqual(DateTime d1, DateTime d2)
+		{
+			return Math.Abs(d1.Subtract(d2).TotalSeconds) < 1;
 		}
 
 		/// <summary>
