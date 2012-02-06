@@ -4,95 +4,53 @@ using System.Text.RegularExpressions;
 
 namespace CSSMinifier.FileLoaders
 {
-	public class MinifyingCssLoader
+	public class MinifyingCssLoader : ITextFileLoader
 	{
+		private ITextFileLoader _contentLoader;
 		private ICache _cache;
-		public MinifyingCssLoader(ICache cache)
+		public MinifyingCssLoader(ITextFileLoader contentLoader, ICache cache)
 		{
+			if (contentLoader == null)
+				throw new ArgumentNullException("contentLoader");
 			if (cache == null)
 				throw new ArgumentNullException("cache");
 
-			_cache = cache;
+			_contentLoader = contentLoader;
+			 _cache = cache;
 		}
 
 		/// <summary>
-		/// This will never return null. It will throw an exception for a null or blank filename.
+		/// This will never return null. It will throw an exception for a null or blank relativePath.
 		/// </summary>
-		public CSSContent Load(string filename, DateTime? lastModifiedDateFromRequest)
+		public TextFileContents Load(string relativePath)
 		{
-			if (string.IsNullOrWhiteSpace(filename))
-				throw new ArgumentException("Null/blank filename specified");
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new ArgumentException("Null/blank relativePath specified");
 
-			DateTime lastModifiedDateOfData;
-			try
-			{
-				var file = new FileInfo(filename);
-				if (!file.Exists)
-					throw new FileNotFoundException("Requested file does not exist", filename);
+			// Request the unprocessed content
+			var unprocessedContent = _contentLoader.Load(relativePath);
 
-				lastModifiedDateOfData = file.LastWriteTime;
-			}
-			catch (Exception e)
-			{
-				return new CSSContent(
-					CSSContent.StatusOptions.Error,
-					String.Format(
-						"/* Unable to determine LastModifiedDate for file: {0} [{1}] */",
-						filename,
-						e.Message
-					),
-					DateTime.MinValue
-				);
-			}
-
-			if ((lastModifiedDateFromRequest != null) && (Math.Abs(lastModifiedDateFromRequest.Value.Subtract(lastModifiedDateOfData).TotalSeconds) < 2))
-			{
-				// Add a small grace period to the comparison (if only because lastModifiedDateOfLiveData is granular to milliseconds while
-				// lastModifiedDate only considers seconds and so will nearly always be between zero and one seconds older)
-				return new CSSContent(
-					CSSContent.StatusOptions.NotModified,
-					"",
-					lastModifiedDateOfData
-				);
-			}
-
-			// Try to retrieve from cache
-			var cacheKey = "CSSController-" + filename;
+			// Try to retrieve cached data
+			var cacheKey = String.Format("{0}-{1}", this.GetType(), relativePath);
 			var cachedData = _cache[cacheKey] as TextFileContents;
 			if (cachedData != null)
 			{
 				// If the cached data is up-to-date then use it..
-				if (cachedData.LastModified >= lastModifiedDateOfData)
-				{
-					return new CSSContent(
-						CSSContent.StatusOptions.Success,
-						cachedData.Content,
-						lastModifiedDateOfData
-					);
-				}
+				if (cachedData.LastModified >= unprocessedContent.LastModified)
+					return cachedData;
 
 				// .. otherwise remove it from cache so it can be replaced with current data below
 				_cache.Remove(cacheKey);
 			}
 
-			try
-			{
-				var content = MinifyCSS(System.IO.File.ReadAllText(filename));
-				_cache.Add(cacheKey, new TextFileContents(filename, lastModifiedDateOfData, content));
-				return new CSSContent(
-					CSSContent.StatusOptions.Success,
-					content,
-					lastModifiedDateOfData
-				);
-			}
-			catch (Exception e)
-			{
-				return new CSSContent(
-					CSSContent.StatusOptions.Error,
-					"/* Error: " + e.Message + " */",
-					DateTime.MinValue
-				);
-			}
+			// Do the work and cache the result
+			var processedContent = new TextFileContents(
+				unprocessedContent.Filename,
+				unprocessedContent.LastModified,
+				MinifyCSS(unprocessedContent.Content)
+			);
+			_cache.Add(cacheKey, processedContent);
+			return processedContent;
 		}
 
 		/// <summary>
@@ -123,38 +81,5 @@ namespace CSSMinifier.FileLoaders
 		private static readonly Regex DelimiterWhitespaceRemover = new Regex(@"\s?([:,;{}])\s?", RegexOptions.Compiled);
 		private static readonly Regex UnitWhitespaceRemover = new Regex(@"([\s:]0)(px|pt|%|em)", RegexOptions.Compiled);
 		private static readonly Regex CommentRemover = new Regex(@"/\*[\d\D]*?\*/", RegexOptions.Compiled);
-
-		[Serializable]
-		public class CSSContent
-		{
-			public CSSContent(StatusOptions status, string content, DateTime lastModified)
-			{
-				if (!Enum.IsDefined(typeof(StatusOptions), status))
-					throw new ArgumentOutOfRangeException("status");
-				if (content == null)
-					throw new ArgumentNullException("content");
-
-				Status = status;
-				Content = content;
-				LastModified = lastModified;
-			}
-
-			public StatusOptions Status { get; private set; }
-
-			/// <summary>
-			/// This will never be null
-			/// </summary>
-			public string Content { get; private set; }
-
-			public DateTime LastModified { get; private set; }
-
-			[Serializable]
-			public enum StatusOptions
-			{
-				Error,
-				Success,
-				NotModified
-			}
-		}
 	}
 }
