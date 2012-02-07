@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace CSSMinifier.FileLoaders
@@ -7,16 +6,12 @@ namespace CSSMinifier.FileLoaders
 	public class MinifyingCssLoader : ITextFileLoader
 	{
 		private ITextFileLoader _contentLoader;
-		private ICache _cache;
-		public MinifyingCssLoader(ITextFileLoader contentLoader, ICache cache)
+		public MinifyingCssLoader(ITextFileLoader contentLoader)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
-			if (cache == null)
-				throw new ArgumentNullException("cache");
 
 			_contentLoader = contentLoader;
-			 _cache = cache;
 		}
 
 		/// <summary>
@@ -27,34 +22,16 @@ namespace CSSMinifier.FileLoaders
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
 
-			// Request the unprocessed content
-			var unprocessedContent = _contentLoader.Load(relativePath);
-
-			// Try to retrieve cached data
-			var cacheKey = String.Format("{0}-{1}", this.GetType(), relativePath);
-			var cachedData = _cache[cacheKey] as TextFileContents;
-			if (cachedData != null)
-			{
-				// If the cached data is up-to-date then use it..
-				if (cachedData.LastModified >= unprocessedContent.LastModified)
-					return cachedData;
-
-				// .. otherwise remove it from cache so it can be replaced with current data below
-				_cache.Remove(cacheKey);
-			}
-
-			// Do the work and cache the result
-			var processedContent = new TextFileContents(
-				unprocessedContent.Filename,
-				unprocessedContent.LastModified,
-				MinifyCSS(unprocessedContent.Content)
+			var content = _contentLoader.Load(relativePath);
+			return new TextFileContents(
+				content.Filename,
+				content.LastModified,
+				MinifyCSS(content.Content)
 			);
-			_cache.Add(cacheKey, processedContent);
-			return processedContent;
 		}
 
 		/// <summary>
-		/// Simple method to minify CSS content using a few regular expressions
+		/// Simple method to minify CSS content using a few regular expressions. This will throw an exception for null input.
 		/// </summary>
 		private string MinifyCSS(string content)
 		{
@@ -65,13 +42,14 @@ namespace CSSMinifier.FileLoaders
 			if (content == "")
 				return "";
 
+			content = CommentRemover.Replace(content, "");
 			content = HashSurroundingWhitespaceRemover.Replace(content, "#");
 			content = ExtraneousWhitespaceRemover.Replace(content, "");
 			content = DuplicateWhitespaceRemover.Replace(content, " ");
 			content = DelimiterWhitespaceRemover.Replace(content, "$1");
 			content = content.Replace(";}", "}");
 			content = UnitWhitespaceRemover.Replace(content, "$1");
-			return CommentRemover.Replace(content, "");
+			return content;
 		}
 
 		// Courtesy of http://madskristensen.net/post/Efficient-stylesheet-minification-in-C.aspx

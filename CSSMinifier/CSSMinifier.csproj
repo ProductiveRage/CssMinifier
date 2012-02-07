@@ -43,10 +43,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
+    <Compile Include="LastModifiedDateRetrievers\SingleFolderLastModifiedDateRetriever.cs" />
+    <Compile Include="LastModifiedDateRetrievers\ILastModifiedDateRetriever.cs" />
     <Compile Include="FileLoaders\ITextFileLoader.cs" />
     <Compile Include="FileLoaders\MinifyingCssLoader.cs" />
+    <Compile Include="FileLoaders\SameFolderImportFlatteningCssLoader.cs" />
     <Compile Include="FileLoaders\SimpleTextFileContentLoader.cs" />
+    <Compile Include="LastModifiedDateRetrievers\SingleFileLastModifiedDateRetriever.cs" />
     <Compile Include="ICache.cs" />
+    <Compile Include="Lists\IEnumerable_Extensions.cs" />
+    <Compile Include="Lists\ImmutableList.cs" />
+    <Compile Include="Lists\IValueValidator.cs" />
+    <Compile Include="Lists\NonNullImmutableList.cs" />
     <Compile Include="PathMapping\IRelativePathMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileLoaders\TextFileContents.cs" />
