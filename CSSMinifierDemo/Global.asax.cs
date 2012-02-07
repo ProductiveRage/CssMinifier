@@ -27,6 +27,12 @@ namespace CSSMinifier
 				new { controller = "CSS", action = "Process" },
 				new { allwithextension = @".*\.css(/.*)?" }
 			);
+			routes.MapRoute(
+				"LessCssStylesheets",
+				"{*allwithextension}",
+				new { controller = "CSS", action = "Process" },
+				new { allwithextension = @".*\.less(/.*)?" }
+			);
 
 			routes.MapRoute(
 				"HomePage",

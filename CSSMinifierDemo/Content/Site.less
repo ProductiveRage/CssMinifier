@@ -1,7 +1,9 @@
-@import url("Resets.css");
-@import url("Site-VerticalLayout.css") only screen and (max-width: 1000px);
+@import url("Resets.less");
+@import url("Site-VerticalLayout.less") only screen and (max-width: 1000px);
 
-html { background: #7F7F7F; }
+@base-colour: #121212;
+
+html { background: #7f7f7f; }
 
 body, td
 {
@@ -44,7 +46,7 @@ div.HeaderContent h1 a:hover,
 div.HeaderContent h1 a:visited
 {
   text-decoration: none;
-  color: #ADADAD;
+  color: @base-colour * 9.6;
 }
 
 div.HeaderContent span.Tagline
@@ -56,16 +58,16 @@ div.HeaderContent span.Tagline
 
 div.Header
 {
-  color: white;
+  color: #fff;
   margin-bottom: 1em;
 }
 
 div.HeaderContent
 {
-  border: 0.25em solid #BCBCBC;
-  background: white;
+  border: 0.25em solid @base-colour * 10.4;
+  background: #fff;
   min-height: 10em;
-  color: #121212;
+  color: @base-colour;
 }
 
 div.WrapperOuter
@@ -90,9 +92,9 @@ div.Content
   padding: 1em;
   padding-right: 3em;
 
-  border: 0.25em solid #C0C0C0;
-  background: white;
-  color: #121212;
+  border: 0.25em solid @base-colour * 10.7;
+  background: #fff;
+  color: @base-colour;
 }
 
 div.NoResults { min-height: 10em; }
@@ -100,8 +102,8 @@ div.NoResults { min-height: 10em; }
 div.Content a
 div.Content a:active,
 div.Content a:link,
-div.Content a:visited { color: #A8A8A8; }
-div.Content a:hover { color: #EEE; }
+div.Content a:visited { color: @base-colour * 9.4; }
+div.Content a:hover { color: @base-colour * 13.2; }
 
 div.Content em { font-style: italic; }
 div.Content strong { font-weight: bold; }
@@ -128,12 +130,12 @@ div.Content div.Tags ul li
 
 div.Content blockquote
 {
-  color: #666;
+  color: @base-colour * 5.4;
   margin-left: 1.5em;
   margin-bottom: 1em;
   padding-left: 0.5em;
-  border-left: 0.2em solid #CCC;
-  background: #F8F8F8;
+  border-left: 0.2em solid @base-colour * 10.7;
+  background: #f8f8f8;
 }
 
 div.Content blockquote p { padding: 0.3em 0 0.7em 0; }
@@ -150,9 +152,9 @@ div.History
   left: -2.5em;
   width: 10em;
 
-  border: 0.25em solid #B7B7B7;
-  background: #595959;
-  color: white;
+  border: 0.25em solid @base-colour * 9.6;
+  background: #5a5a5a;
+  color: #fff;
   padding: 0.5em;
   margin: 0.5em 0;
 }
@@ -185,14 +187,14 @@ div.Recent a,
 div.Featured a,
 div.History a
 {
-  color: #F1F1F1;
+  color: @base-colour * 13.4;
   display: block;
 }
 
 div.About a:hover,
 div.Recent a:hover,
 div.Featured a:hover,
-div.History a:hover { color: #C0C0C0; }
+div.History a:hover { color: @base-colour * 10.7; }
 
 div.Content h2,
 div.Content h3,
@@ -201,7 +203,7 @@ div.Content h5,
 div.Content h6
 {
   padding-bottom: 0.5em;
-  color: #A8A8A8;
+  color: @base-colour * 9.4;
 }
 div.Content h2 { font-size: 140%; }
 div.Content h3 { font-size: 120%; }
@@ -211,8 +213,11 @@ div.Content h5 { font-size: 105%; }
 div.Content h2 a { text-decoration: none; }
 
 div.Content h3.PostDate,
-div.Content p.PostTime { color: #BCBCBC; }
-div.Content p.PostTime { padding-bottom: 0.5em; }
+div.Content p.PostTime
+{
+	color: @base-colour * 9.6;
+	padding-bottom: 0.5em;
+}
 
 div.ErrorPageContent { float: left; }
 div.Content img.ErrorPage
@@ -220,5 +225,5 @@ div.Content img.ErrorPage
   display: block;
   float: left;
   margin-right: 1em;
-  border: 0.1em solid #C0C0C0;
+  border: 0.1em solid @base-colour * 10.7;
 }
