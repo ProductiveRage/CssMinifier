@@ -48,8 +48,8 @@
     <Reference Include="System.Web.Services" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Content\Resets.css" />
-    <Content Include="Content\Site-VerticalLayout.css" />
+    <None Include="Content\Resets.less" />
+    <None Include="Content\Site-VerticalLayout.less" />
     <Compile Include="Common\NonExpiringASPNetCacheCache.cs" />
     <Compile Include="Common\ServerUtilityPathMapper.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Global.asax" />
-    <Content Include="Content\Site.css" />
+    <None Include="Content\Site.less" />
     <Content Include="Views\Home\Index.cshtml">
       <SubType>Code</SubType>
     </Content>
