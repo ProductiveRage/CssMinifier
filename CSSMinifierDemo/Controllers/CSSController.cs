@@ -4,7 +4,10 @@ using System.IO.Compression;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using CSSMinifier;
 using CSSMinifier.FileLoaders;
+using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
+using CSSMinifier.PathMapping;
 using CSSMinifierDemo.Common;
 
 namespace CSSMinifierDemo.Controllers
@@ -24,31 +27,14 @@ namespace CSSMinifierDemo.Controllers
 				return Content("File not found: " + relativePath, "text/css");
 			}
 
-			var lastModifiedDateFromRequest = TryToGetIfModifiedSinceDateFromRequest();
-			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, file.LastWriteTime))
-			{
-				Response.StatusCode = 304;
-				Response.StatusDescription = "Not Modified";
-				return Content("", "text/css");
-			}
-
 			try
 			{
-				var loader = new MinifyingCssLoader(
-					new SimpleTextFileContentLoader(relativePathMapper),
-					new NonExpiringASPNetCacheCache(HttpContext.Cache)
+				return ProcessWithSingleFolderImportFlatteningMinifier(
+					relativePath,
+					relativePathMapper,
+					new NonExpiringASPNetCacheCache(HttpContext.Cache),
+					TryToGetIfModifiedSinceDateFromRequest()
 				);
-				var content = loader.Load(relativePath);
-				if (content == null)
-					throw new Exception("Received null response from Css Loader - this should not happen");
-				if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, file.LastWriteTime))
-				{
-					Response.StatusCode = 304;
-					Response.StatusDescription = "Not Modified";
-					return Content("", "text/css");
-				}
-				SetResponseCacheHeadersForSuccess(content.LastModified);
-				return Content(content.Content, "text/css");
 			}
 			catch (Exception e)
 			{
@@ -60,6 +46,109 @@ namespace CSSMinifierDemo.Controllers
 				return Content("Error: " + e.Message);
 #endif
 			}
+		}
+
+		/// <summary>
+		/// This will minify the contents of a single stylesheet, incorporating caching of the minified content and implementing 304 responses for cases where the request
+		/// came with an If-Modified-Since header indicating that current content already exists on the client (the cached content is updated if the file has changed
+		/// since the cached data was recorded). GZip and Deflate compression of the response are supported where specified in Accept-Encoding request headers.
+		/// </summary>
+		private ActionResult ProcessWithSingleFileMinifier(
+			string relativePath,
+			IRelativePathMapper relativePathMapper,
+			ICache cache,
+			DateTime? lastModifiedDateFromRequest)
+		{
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new ArgumentException("Null/blank relativePath specified");
+			if (cache == null)
+				throw new ArgumentNullException("cache");
+			if (relativePathMapper == null)
+				throw new ArgumentNullException("relativePathMapper");
+
+			var lastModifiedDateRetriever = new SingleFileLastModifiedDateRetriever(relativePathMapper);
+			var lastModifiedDate = lastModifiedDateRetriever.GetLastModifiedDate(relativePath);
+			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
+			{
+				Response.StatusCode = 304;
+				Response.StatusDescription = "Not Modified";
+				return Content("", "text/css");
+			}
+
+			var loader = new CachingTextFileLoader(
+				new MinifyingCssLoader(
+					new SimpleTextFileContentLoader(relativePathMapper)
+				),
+				lastModifiedDateRetriever,
+				cache
+			);
+			var content = loader.Load(relativePath);
+			if (content == null)
+				throw new Exception("Received null response from Css Loader - this should not happen");
+			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
+			{
+				Response.StatusCode = 304;
+				Response.StatusDescription = "Not Modified";
+				return Content("", "text/css");
+			}
+			SetResponseCacheHeadersForSuccess(content.LastModified);
+			return Content(content.Content, "text/css");
+		}
+
+		/// <summary>
+		/// This will combine a stylesheet with all of its imports (and any imports within those, and within those, etc..) and minify the resulting content for cases only
+		/// where all files are in the same folder and no relative or absolute paths are specified in the import declarations. It incorporates caching of the minified
+		/// content and implements 304 responses for cases where the request came with an If-Modified-Since header indicating that current content already exists on the
+		/// client. The last-modified-date for the content is determined by retrieving the most recent LastWriteTime for any file in the folder - although this may lead
+		/// to some false-positives if unrelated files are updated, it does mean that if any file that IS part of the combined stylesheet is updated then the content
+		/// will be identified as stale and re-generated. The cached content will likewise be invalidated and updated if any files in the folder have changed since the
+		/// date recorded for the cached data. GZip and Deflate compression of the response are supported where specified in Accept-Encoding request headers.
+		/// </summary>
+		private ActionResult ProcessWithSingleFolderImportFlatteningMinifier(
+			string relativePath,
+			IRelativePathMapper relativePathMapper,
+			ICache cache,
+			DateTime? lastModifiedDateFromRequest)
+		{
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new ArgumentException("Null/blank relativePath specified");
+			if (cache == null)
+				throw new ArgumentNullException("cache");
+			if (relativePathMapper == null)
+				throw new ArgumentNullException("relativePathMapper");
+
+			// Using the SingleFolderLastModifiedDateRetriever means that we can determine whether cached content (either in the ASP.Net cache or in the browser cache)
+			// is up to date without having to perform the complete import flattening process. It may lead to some unnecessary work if an unrelated file in the folder
+			// is updated but for the most common cases it should be an efficient approach.
+			var lastModifiedDateRetriever = new SingleFolderLastModifiedDateRetriever(relativePathMapper);
+			var lastModifiedDate = lastModifiedDateRetriever.GetLastModifiedDate(relativePath);
+			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
+			{
+				Response.StatusCode = 304;
+				Response.StatusDescription = "Not Modified";
+				return Content("", "text/css");
+			}
+
+			var loader = new CachingTextFileLoader(
+				new MinifyingCssLoader(
+					new SameFolderImportFlatteningCssLoader(
+						new SimpleTextFileContentLoader(relativePathMapper)
+					)
+				),
+				lastModifiedDateRetriever,
+				cache
+			);
+			var content = loader.Load(relativePath);
+			if (content == null)
+				throw new Exception("Received null response from Css Loader - this should not happen");
+			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
+			{
+				Response.StatusCode = 304;
+				Response.StatusDescription = "Not Modified";
+				return Content("", "text/css");
+			}
+			SetResponseCacheHeadersForSuccess(content.LastModified);
+			return Content(content.Content, "text/css");
 		}
 
 		/// <summary>
