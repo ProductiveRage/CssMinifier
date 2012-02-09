@@ -5,8 +5,7 @@ using CSSMinifier.PathMapping;
 namespace CSSMinifier.FileLoaders
 {
 	/// <summary>
-	/// This will try to load the contents of a single file from disk, with no processing. If the file is not accessible, it will either throw an exception or return an
-	/// empty CssFileContents, depending upon the fileErrorBehaviour value passed to the constructor.
+	/// This will try to load the contents of a single file from disk, with no processing. If the file is not accessible, it will throw an exception.
 	/// </summary>
 	public class SimpleTextFileContentLoader : ITextFileLoader
 	{

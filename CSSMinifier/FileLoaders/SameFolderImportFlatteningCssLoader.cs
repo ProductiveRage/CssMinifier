@@ -63,11 +63,7 @@ namespace CSSMinifier.FileLoaders
 
 				// Ensure that the requested stylesheet has not been requested further up the chain - if so, throw a CircularStylesheetImportException rather than
 				// waiting for a StackOverflowException to occur
-				var importDeclarationFullPath = Path.Combine(
-					new FileInfo(combinedContentFile.Filename).DirectoryName,
-					importDeclaration.Filename
-				);
-				if (importChain.Any(f => f.Filename.Equals(importDeclarationFullPath, StringComparison.InvariantCultureIgnoreCase)))
+				if (importChain.Any(f => f.Filename.Equals(importDeclaration.Filename, StringComparison.InvariantCultureIgnoreCase)))
 					throw new CircularStylesheetImportException("Circular stylesheet import detected for file: " + importDeclaration.Filename);
 
 				// Retrieve the content from imported file, wrap it in a media query if required and replace the import declaration with the content
@@ -109,7 +105,7 @@ namespace CSSMinifier.FileLoaders
 			return new TextFileContents(
 				content.Filename,
 				content.LastModified,
-				CommentRemover.Replace(content.Content, "")
+				CommentRemover.Replace(content.Content + "/**/", "") // Ensure that any unclosed comments are handled
 			);
 		}
 
@@ -143,9 +139,10 @@ namespace CSSMinifier.FileLoaders
 
 		/// <summary>
 		/// This will return a list of the import declarations within a valid css file's contents that has been stripped of comments (this method apples no processing
-		/// to handle comments so the content has commented-out import declaration, they will be included in the returned list).
+		/// to handle comments so the content has commented-out import declaration, they will be included in the returned list). This is only public to enable unit
+		/// testing of this method.
 		/// </summary>
-		private static NonNullImmutableList<StylesheetImportDeclaration> GetImportDeclarations(string commentLessContent)
+		public static NonNullImmutableList<StylesheetImportDeclaration> GetImportDeclarations(string commentLessContent)
 		{
 			if (commentLessContent == null)
 				throw new ArgumentNullException("minifiedContent");
@@ -190,7 +187,10 @@ namespace CSSMinifier.FileLoaders
 			protected CircularStylesheetImportException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 		}
 
-		private class StylesheetImportDeclaration
+		/// <summary>
+		/// This is only public to enable unit testing of the GetImportDeclarations methods
+		/// </summary>
+		public class StylesheetImportDeclaration
 		{
 			public StylesheetImportDeclaration(string declaration, string filename, string mediaOverride)
 			{

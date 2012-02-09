@@ -42,7 +42,7 @@ namespace CSSMinifier.FileLoaders
 			if (content == "")
 				return "";
 
-			content = CommentRemover.Replace(content, "");
+			content = CommentRemover.Replace(content += "/**/", ""); // Ensure that any unclosed comments are handled
 			content = HashSurroundingWhitespaceRemover.Replace(content, "#");
 			content = ExtraneousWhitespaceRemover.Replace(content, "");
 			content = DuplicateWhitespaceRemover.Replace(content, " ");
