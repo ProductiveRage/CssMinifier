@@ -5,7 +5,12 @@ The classes here are intended to enable the easy construction of ASP.Net MVC sty
     public class CSSController : Controller
     {
         public ActionResult Process()
-        {            ITextFileLoader cssLoader = new SameFolderImportFlatteningCssLoader(                new SimpleTextFileContentLoader(                    new ServerUtilityPathMapper(Server)                )            );
+        {
+            ITextFileLoader cssLoader = new SameFolderImportFlatteningCssLoader(
+                new SimpleTextFileContentLoader(
+                    new ServerUtilityPathMapper(Server)
+                )
+            );
             if (Request.FilePath.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
             {
                 cssLoader = new DotLessCssCssLoader(
