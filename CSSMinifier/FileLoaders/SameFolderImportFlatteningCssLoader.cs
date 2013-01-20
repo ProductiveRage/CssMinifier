@@ -1,28 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using CSSMinifier.Lists;
+using CSSMinifier.Logging;
 
 namespace CSSMinifier.FileLoaders
 {
 	/// <summary>
 	/// This will "flatten" all of the imports in a CSS file by including the imported content inline (part of the process also involves removing comments from the content). The
 	/// imports must all reside in the same folder as the initial file and all must be specified by filename only - relative and absolute paths are not supported and will result
-	/// in an UnsupportedStylesheetImportException being raised, as will external urls. If an import chain results in circular references, a CircularStylesheetImportException
-	/// will be raised.
+	/// in an UnsupportedStylesheetImportException being raised, as will external urls (or a warning being logged, depending upon the unsupportedImportBehaviour value). If an
+	/// import chain results in circular references, a CircularStylesheetImportException will be raised (or a warning being logged, depending upon the specified value for
+	/// circularReferenceImportBehaviour).
 	/// </summary>
 	public class SameFolderImportFlatteningCssLoader : ITextFileLoader
 	{
 		private ITextFileLoader _contentLoader;
-		public SameFolderImportFlatteningCssLoader(ITextFileLoader contentLoader)
+		private ErrorBehaviourOptions _circularReferenceImportBehaviour, _unsupportedImportBehaviour;
+		private ILogEvents _logger;
+		public SameFolderImportFlatteningCssLoader(
+				ITextFileLoader contentLoader,
+			ErrorBehaviourOptions circularReferenceImportBehaviour,
+			ErrorBehaviourOptions unsupportedImportBehaviour,
+			ILogEvents logger)
 		{
 			if (contentLoader == null)
-				throw new ArgumentNullException("cssContentLoader");
+				throw new ArgumentNullException("contentLoader");
+			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), circularReferenceImportBehaviour))
+				throw new ArgumentOutOfRangeException("circularReferenceImportBehaviour");
+			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), unsupportedImportBehaviour))
+				throw new ArgumentOutOfRangeException("unsupportedImportBehaviour");
+			if (logger == null)
+				throw new ArgumentNullException("logger");
 
 			_contentLoader = contentLoader;
+			_circularReferenceImportBehaviour = circularReferenceImportBehaviour;
+			_unsupportedImportBehaviour = unsupportedImportBehaviour;
+			_logger = logger;
+		}
+
+		public enum ErrorBehaviourOptions
+		{
+			DisplayWarningAndIgnore,
+			RaiseException
 		}
 
 		/// <summary>
@@ -58,20 +80,58 @@ namespace CSSMinifier.FileLoaders
 			foreach (var importDeclaration in GetImportDeclarations(combinedContentFile.Content))
 			{
 				// Ensure that the imported stylesheet is not a relative or absolute path or an external url
+				var removeImport = false;
 				if (importDeclaration.Filename.Contains("\\") || importDeclaration.Filename.Contains("/"))
-					throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration.Filename);
+				{
+					if (_unsupportedImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
+					{
+						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration.Filename + " (it has been removed)");
+						removeImport = true;
+					}
+					else
+						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration.Filename);
+				}
 
 				// Ensure that the requested stylesheet has not been requested further up the chain - if so, throw a CircularStylesheetImportException rather than
-				// waiting for a StackOverflowException to occur
+				// waiting for a StackOverflowException to occur (or log a warning and remove the import, depending upon specified behaviour options)
 				if (importChain.Any(f => f.Filename.Equals(importDeclaration.Filename, StringComparison.InvariantCultureIgnoreCase)))
-					throw new CircularStylesheetImportException("Circular stylesheet import detected for file: " + importDeclaration.Filename);
+				{
+					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
+					{
+						_logger.LogIgnoringAnyError(
+							LogLevel.Warning,
+							() => string.Format(
+								"Circular import encountered: {0} (it has been removed from {1})",
+								importDeclaration.Filename,
+								relativePath
+							)
+						);
+						removeImport = true;
+					}
+					else
+						throw new CircularStylesheetImportException("Circular stylesheet import detected for file: " + importDeclaration.Filename);
+				}
 
 				// Retrieve the content from imported file, wrap it in a media query if required and replace the import declaration with the content
-				var importedFileContent = GetCombinedContent(
-					importDeclaration.Filename,
-					importChain.Add(combinedContentFile)
+				TextFileContents importedFileContent;
+				if (removeImport)
+				{
+					// If we want to ignore this import (meaning it's invalid and DifferentFolderImportBehaviourOptions is to log and proceed instead of throw an
+					// exception) then we just want to replace the dodgy import with blank content
+					importedFileContent = new TextFileContents(importDeclaration.Filename, DateTime.MinValue, "");
+				}
+				else
+				{
+					// If the original file has a relative path (eg. "styles/Test1.css") then we'll need to include that path in the import filename (eg. "Test2.css"
+					// must be transformed for "styles/Test2.css") otherwise the path resolution in the text file loader can't be expected to work (we know that the
+					// import filename doesn't have a relative path as we've just tested for that above!)
+					var breakPoint = relativePath.LastIndexOfAny(new[] { '\\', '/' });
+					importedFileContent = GetCombinedContent(
+						((breakPoint == -1) ? "" : relativePath.Substring(0, breakPoint + 1)) + importDeclaration.Filename,
+						importChain.Concat(new[] { combinedContentFile }).ToNonNullImmutableList()
 				);
-				if (importDeclaration.MediaOverride != null)
+				}
+				if ((importDeclaration.MediaOverride != null) && !removeImport) // Don't bother wrapping an import that will be ignored in any media query content
 				{
 					importedFileContent = new TextFileContents(
 						importedFileContent.Filename,

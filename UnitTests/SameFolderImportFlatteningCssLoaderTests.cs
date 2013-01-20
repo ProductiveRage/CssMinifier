@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using CSSMinifier.FileLoaders;
+using CSSMinifier.Logging;
 using UnitTests.Common;
 using Xunit;
 
@@ -20,7 +21,10 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
-				)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			Assert.Equal(expected, contentLoader.Load("Test.css").Content);
 		}
@@ -38,7 +42,10 @@ namespace UnitTests
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport1),
 					new TextFileContents("Test2.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport2)
-				)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			Assert.Equal(expected, contentLoader.Load("Test.css").Content);
 		}
@@ -54,7 +61,10 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
-				)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			Assert.Equal(expected, contentLoader.Load("Test.css").Content);
 		}
@@ -70,7 +80,10 @@ namespace UnitTests
 			var contentLoader = new SameFolderImportFlatteningCssLoader(
 				new FixedListCssContentLoader(
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content)
-				)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			Assert.Throws<SameFolderImportFlatteningCssLoader.UnsupportedStylesheetImportException>(() =>
 			{
@@ -91,7 +104,10 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
-				)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			Assert.Throws<SameFolderImportFlatteningCssLoader.CircularStylesheetImportException>(() =>
 			{

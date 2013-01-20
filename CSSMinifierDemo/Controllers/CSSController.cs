@@ -7,6 +7,7 @@ using System.Web.Mvc;
 using CSSMinifier;
 using CSSMinifier.FileLoaders;
 using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
+using CSSMinifier.Logging;
 using CSSMinifier.PathMapping;
 using CSSMinifierDemo.Common;
 
@@ -79,7 +80,10 @@ namespace CSSMinifierDemo.Controllers
 			}
 
 			var importFlatteningCssLoader = new SameFolderImportFlatteningCssLoader(
-				new SimpleTextFileContentLoader(relativePathMapper)
+				new SimpleTextFileContentLoader(relativePathMapper),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
+				new NullLogger()
 			);
 			ITextFileLoader cssLoader;
 			if (relativePath.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
