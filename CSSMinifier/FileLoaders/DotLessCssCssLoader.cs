@@ -76,7 +76,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Error, () => message);
 			}
 
 			public void Info(string message)
@@ -84,7 +84,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Info, () => message);
 			}
 
 			public void Log(dotless.Core.Loggers.LogLevel level, string message)
@@ -121,7 +121,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Warning, () => message);
 			}
 		}
 	}
