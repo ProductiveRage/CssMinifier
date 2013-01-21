@@ -87,7 +87,7 @@ namespace CSSMinifierDemo.Controllers
 			);
 			ITextFileLoader cssLoader;
 			if (relativePath.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
-				cssLoader = new DotLessCssCssLoader(importFlatteningCssLoader, DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify);
+				cssLoader = new DotLessCssCssLoader(importFlatteningCssLoader, DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify, new NullLogger());
 			else
 				cssLoader = new MinifyingCssLoader(importFlatteningCssLoader);
 			var modifiedDateCachingCssLoader = new CachingTextFileLoader(
