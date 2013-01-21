@@ -3,56 +3,110 @@ using System.Collections.Generic;
 
 namespace CSSMinifier.Lists
 {
-    [Serializable]
-    public class NonNullImmutableList<T> : ImmutableList<T> where T : class
-    {
-        public NonNullImmutableList(IEnumerable<T> values, IValueValidator<T> validator) : base(values, new NonNullWrappingValueValidator<T>(validator)) { }
+	[Serializable]
+	public class NonNullImmutableList<T> : ImmutableList<T> where T : class
+	{
+		private readonly static Validator _defaultValidator = new Validator(null);
+		private IValueValidator<T> _optionalValueValidator;
 
-        public NonNullImmutableList(IEnumerable<T> values) : this(values, null) { }
-        public NonNullImmutableList(IValueValidator<T> validator, params T[] values) : this((IEnumerable<T>)values, validator) { }
-        public NonNullImmutableList(params T[] values) : this(null, values) { }
-        public NonNullImmutableList() : this(new T[0]) { }
+		public NonNullImmutableList() : this((IValueValidator<T>)null) { }
+		public NonNullImmutableList(IEnumerable<T> values) : this(values, null) { }
+		public NonNullImmutableList(IValueValidator<T> optionalValueValidator)
+			: base((Node)null, GetValidator(optionalValueValidator))
+		{
+			_optionalValueValidator = optionalValueValidator;
+		}
+		public NonNullImmutableList(IEnumerable<T> values, IValueValidator<T> optionalValueValidator)
+			: base(values, GetValidator(optionalValueValidator))
+		{
+			_optionalValueValidator = optionalValueValidator;
+		}
+		private NonNullImmutableList(Node tail, IValueValidator<T> optionalValueValidator)
+			: base(tail, GetValidator(optionalValueValidator))
+		{
+			_optionalValueValidator = optionalValueValidator;
+		}
 
-        public new NonNullImmutableList<T> Add(T value)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.Add(value));
-        }
-        public new NonNullImmutableList<T> AddRange(IEnumerable<T> values)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.AddRange(values));
-        }
-        public new NonNullImmutableList<T> Insert(int index, T value)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.Insert(index, value));
-        }
-        public new NonNullImmutableList<T> Remove(T value)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.Remove(value));
-        }
-        public new NonNullImmutableList<T> RemoveAt(int index)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.RemoveAt(index));
-        }
-        public new NonNullImmutableList<T> Sort(Comparison<T> comparison)
-        {
-            return toDerivedClass<NonNullImmutableList<T>>(base.Sort(comparison));
-        }
+		private static IValueValidator<T> GetValidator(IValueValidator<T> optionalValueValidator)
+		{
+			if (optionalValueValidator == null)
+				return _defaultValidator;
+			return new Validator(optionalValueValidator);
+		}
 
-        [Serializable]
-        private class NonNullWrappingValueValidator<U> : IValueValidator<U> where U : class
-        {
-            private IValueValidator<U> validator;
-            public NonNullWrappingValueValidator(IValueValidator<U> validator)
-            {
-                this.validator = validator;
-            }
-            public void EnsureValid(U value)
-            {
-                if (value == null)
-                    throw new ArgumentNullException("value");
-                if (this.validator != null)
-                    this.validator.EnsureValid(value);
-            }
-        }
-    }
+		public new NonNullImmutableList<T> Add(T value)
+		{
+			return ToNonNullOrEmptyStringList(base.Add(value));
+		}
+		public new NonNullImmutableList<T> AddRange(IEnumerable<T> values)
+		{
+			return ToNonNullOrEmptyStringList(base.AddRange(values));
+		}
+		public new NonNullImmutableList<T> Insert(T value, int insertAtIndex)
+		{
+			return ToNonNullOrEmptyStringList(base.Insert(value, insertAtIndex));
+		}
+		public new NonNullImmutableList<T> Insert(IEnumerable<T> values, int insertAtIndex)
+		{
+			return ToNonNullOrEmptyStringList(base.Insert(values, insertAtIndex));
+		}
+		public new NonNullImmutableList<T> Remove(T value)
+		{
+			return ToNonNullOrEmptyStringList(base.Remove(value));
+		}
+		public new NonNullImmutableList<T> Remove(T value, IEqualityComparer<T> optionalComparer)
+		{
+			return ToNonNullOrEmptyStringList(base.Remove(value, optionalComparer));
+		}
+		public new NonNullImmutableList<T> RemoveAt(int removeAtIndex)
+		{
+			return ToNonNullOrEmptyStringList(base.RemoveAt(removeAtIndex));
+		}
+		public new NonNullImmutableList<T> RemoveRange(int removeAtIndex, int count)
+		{
+			return ToNonNullOrEmptyStringList(base.RemoveRange(removeAtIndex, count));
+		}
+		public new NonNullImmutableList<T> Sort()
+		{
+			return ToNonNullOrEmptyStringList(base.Sort());
+		}
+		public new NonNullImmutableList<T> Sort(Comparison<T> optionalComparison)
+		{
+			return ToNonNullOrEmptyStringList(base.Sort(optionalComparison));
+		}
+		public new NonNullImmutableList<T> Sort(IComparer<T> optionalComparer)
+		{
+			return ToNonNullOrEmptyStringList(base.Sort(optionalComparer));
+		}
+		private NonNullImmutableList<T> ToNonNullOrEmptyStringList(ImmutableList<T> list)
+		{
+			if (list == null)
+				throw new ArgumentNullException("list");
+
+			return To<NonNullImmutableList<T>>(
+				list,
+				tail => new NonNullImmutableList<T>(tail, _optionalValueValidator)
+			);
+		}
+
+		private class Validator : IValueValidator<T>
+		{
+			private IValueValidator<T> _optionalInnerValidator;
+			public Validator(IValueValidator<T> optionalInnerValidator)
+			{
+				_optionalInnerValidator = optionalInnerValidator;
+			}
+
+			/// <summary>
+			/// This will throw an exception for a value that does pass validation requirements
+			/// </summary>
+			public void EnsureValid(T value)
+			{
+				if (value == null)
+					throw new ArgumentNullException("value");
+				if (_optionalInnerValidator != null)
+					_optionalInnerValidator.EnsureValid(value);
+			}
+		}
+	}
 }
