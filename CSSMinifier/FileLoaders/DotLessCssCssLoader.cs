@@ -69,7 +69,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => string.Format(message, args));
+				_logger.Log(Logging.LogLevel.Debug, DateTime.Now, () => string.Format(message, args), null);
 			}
 
 			public void Error(string message, params object[] args)
@@ -77,7 +77,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Error, () => string.Format(message, args));
+				_logger.Log(Logging.LogLevel.Error, DateTime.Now, () => string.Format(message, args), null);
 			}
 
 			public void Info(string message, params object[] args)
@@ -85,7 +85,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Info, () => string.Format(message, args));
+				_logger.Log(Logging.LogLevel.Info, DateTime.Now, () => string.Format(message, args), null);
 			}
 
 			public void Log(dotless.Core.Loggers.LogLevel level, string message, params object[] args)
@@ -112,7 +112,7 @@ namespace CSSMinifier.FileLoaders
 						return;
 
 					default:
-						_logger.LogIgnoringAnyError(Logging.LogLevel.Warning, () => "DotLess logged message with unsupported LogLeve [" + level.ToString() + "]: " + message);
+						_logger.Log(Logging.LogLevel.Warning, DateTime.Now, () => "DotLess logged message with unsupported LogLeve [" + level.ToString() + "]: " + message, null);
 						return;
 				}
 			}
@@ -122,7 +122,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Warning, () => string.Format(message, args));
+				_logger.Log(Logging.LogLevel.Warning, DateTime.Now, () => string.Format(message, args), null);
 			}
 
 			public void Log(dotless.Core.Loggers.LogLevel level, string message) { Log(level, message, new object[0]); }
