@@ -8,14 +8,14 @@ namespace CSSMinifier.FileLoaders
 	[Serializable]
 	public class TextFileContents
 	{
-		public TextFileContents(string filename, DateTime lastModified, string content)
+		public TextFileContents(string relativePath, DateTime lastModified, string content)
 		{
-			if (string.IsNullOrWhiteSpace(filename))
-				throw new ArgumentException("Null/blank filename specified");
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new ArgumentException("Null/blank relativePath specified");
 			if (content == null)
 				throw new ArgumentNullException("content");
 
-			Filename = filename.Trim();
+			RelativePath = relativePath.Trim();
 			LastModified = lastModified;
 			Content = content.Trim();
 		}
@@ -23,7 +23,7 @@ namespace CSSMinifier.FileLoaders
 		/// <summary>
 		/// This will never be null or empty
 		/// </summary>
-		public string Filename { get; private set; }
+		public string RelativePath { get; private set; }
 
 		public DateTime LastModified { get; private set; }
 

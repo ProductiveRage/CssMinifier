@@ -26,7 +26,7 @@ namespace UnitTests.Common
 		{
 			if (string.IsNullOrWhiteSpace(filename))
 				throw new ArgumentException("Null/blank filename specified");
-			var file = _files.FirstOrDefault(f => f.Filename.Replace("/", "\\").Equals(filename.Replace("/", "\\"), StringComparison.InvariantCultureIgnoreCase));
+			var file = _files.FirstOrDefault(f => f.RelativePath.Replace("/", "\\").Equals(filename.Replace("/", "\\"), StringComparison.InvariantCultureIgnoreCase));
 			if (file == null)
 				throw new ArgumentException("Unsupported filename: " + filename);
 			return file;

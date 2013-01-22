@@ -24,7 +24,7 @@ namespace CSSMinifier.FileLoaders
 
 			var content = _contentLoader.Load(relativePath);
 			return new TextFileContents(
-				content.Filename,
+				content.RelativePath,
 				content.LastModified,
 				MinifyCSS(content.Content)
 			);
