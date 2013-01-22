@@ -115,6 +115,32 @@ namespace UnitTests
 			});
 		}
 
+
+		/// <summary>
+		/// If an imported file then tries to import itself this should result in a CircularStylesheetImportException
+		/// </summary>
+		[Fact]
+		public void SelfImportingNestedFileWithRelativePathShouldRaiseException()
+		{
+			var content = "@import url(\"Test1.css\");\r\np { color: blue; }\r\n\r\n";
+			var contentImport = "@import url(\"Test1.css\");\r\np { color: red; }\r\n\r\n";
+
+			var contentLoader = new SameFolderImportFlatteningCssLoader(
+				new FixedListCssContentLoader(
+					new TextFileContents("/Styles/Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
+					new TextFileContents("/Styles/Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
+				),
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
+				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
+				new NullLogger()
+			);
+
+			Assert.Throws<SameFolderImportFlatteningCssLoader.CircularStylesheetImportException>(() =>
+			{
+				contentLoader.Load("/Styles/Test.css");
+			});
+		}
+
 		public class ImportDeclarationRetrieverDirect
 		{
 			[Fact]
