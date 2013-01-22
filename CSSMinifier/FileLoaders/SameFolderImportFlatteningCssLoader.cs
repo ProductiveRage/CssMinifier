@@ -77,19 +77,19 @@ namespace CSSMinifier.FileLoaders
 			var combinedContentFile = RemoveComments(
 				_contentLoader.Load(relativePath)
 			);
-			foreach (var importDeclaration2 in GetImportDeclarations(combinedContentFile.Content))
+			foreach (var importDeclaration in GetImportDeclarations(combinedContentFile.Content))
 			{
 				// Ensure that the imported stylesheet is not a relative or absolute path or an external url
 				var removeImport = false;
-				if (importDeclaration2.RelativePath.Contains("\\") || importDeclaration2.RelativePath.Contains("/"))
+				if (importDeclaration.RelativePath.Contains("\\") || importDeclaration.RelativePath.Contains("/"))
 				{
 					if (_unsupportedImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
 					{
-						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration2.RelativePath + " (it has been removed)");
+						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration.RelativePath + " (it has been removed)");
 						removeImport = true;
 					}
 					else
-						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration2.RelativePath);
+						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration.RelativePath);
 				}
 
 				// If the original file has a relative path (eg. "styles/Test1.css") then we'll need to include that path in the import filename (eg. "Test2.css"
@@ -100,13 +100,13 @@ namespace CSSMinifier.FileLoaders
 				StylesheetImportDeclaration importDeclarationWithConsistentFilename;
 				var breakPoint = relativePath.LastIndexOfAny(new[] { '\\', '/' });
 				if (breakPoint == -1)
-					importDeclarationWithConsistentFilename = importDeclaration2;
+					importDeclarationWithConsistentFilename = importDeclaration;
 				else
 				{
 					importDeclarationWithConsistentFilename = new StylesheetImportDeclaration(
-						importDeclaration2.Declaration,
-						relativePath.Substring(0, breakPoint + 1) + importDeclaration2.RelativePath,
-						importDeclaration2.MediaOverride
+						importDeclaration.Declaration,
+						relativePath.Substring(0, breakPoint + 1) + importDeclaration.RelativePath,
+						importDeclaration.MediaOverride
 					);
 				}
 
