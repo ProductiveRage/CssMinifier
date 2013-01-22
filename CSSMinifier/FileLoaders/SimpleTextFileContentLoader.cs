@@ -30,12 +30,12 @@ namespace CSSMinifier.FileLoaders
 
 			var file = new FileInfo(_relativePathMapper.MapPath(relativePath));
 			if (!file.Exists)
-				throw new ArgumentException("Requested file does not exist: " + file.FullName);
+				throw new ArgumentException("Requested file does not exist: " + relativePath);
 
 			try
 			{
 				var fileContents = new TextFileContents(
-					file.FullName,
+					relativePath,
 					file.LastWriteTime,
 					File.ReadAllText(file.FullName)
 				);
@@ -43,7 +43,7 @@ namespace CSSMinifier.FileLoaders
 			}
 			catch (Exception e)
 			{
-				throw new ArgumentException("Unable to load requested file: " + file.FullName, e);
+				throw new ArgumentException("Unable to load requested file: " + relativePath, e);
 			}
 		}
 	}

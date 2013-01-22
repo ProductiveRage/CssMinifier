@@ -94,7 +94,7 @@ namespace CSSMinifier.FileLoaders
 
 				// Ensure that the requested stylesheet has not been requested further up the chain - if so, throw a CircularStylesheetImportException rather than
 				// waiting for a StackOverflowException to occur (or log a warning and remove the import, depending upon specified behaviour options)
-				if (importChain.Any(f => f.Filename.Equals(importDeclaration.Filename, StringComparison.InvariantCultureIgnoreCase)))
+				if (importChain.Any(f => f.RelativePath.Equals(importDeclaration.Filename, StringComparison.InvariantCultureIgnoreCase)))
 				{
 					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
 					{
@@ -134,7 +134,7 @@ namespace CSSMinifier.FileLoaders
 				if ((importDeclaration.MediaOverride != null) && !removeImport) // Don't bother wrapping an import that will be ignored in any media query content
 				{
 					importedFileContent = new TextFileContents(
-						importedFileContent.Filename,
+						importedFileContent.RelativePath,
 						importedFileContent.LastModified,
 						String.Format(
 							"@media {0} {{{1}{2}{1}}}{1}",
@@ -145,7 +145,7 @@ namespace CSSMinifier.FileLoaders
 					);
 				}
 				combinedContentFile = new TextFileContents(
-					combinedContentFile.Filename,
+					combinedContentFile.RelativePath,
 					combinedContentFile.LastModified > importedFileContent.LastModified ? combinedContentFile.LastModified : importedFileContent.LastModified,
 					combinedContentFile.Content.Replace(
 						importDeclaration.Declaration,
@@ -163,7 +163,7 @@ namespace CSSMinifier.FileLoaders
 				throw new ArgumentNullException("content");
 
 			return new TextFileContents(
-				content.Filename,
+				content.RelativePath,
 				content.LastModified,
 				CommentRemover.Replace(content.Content + "/**/", "") // Ensure that any unclosed comments are handled
 			);

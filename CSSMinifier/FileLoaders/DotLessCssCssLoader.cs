@@ -46,7 +46,7 @@ namespace CSSMinifier.FileLoaders
 				_minificationType == LessCssMinificationTypeOptions.Minify
 			);
 			return new TextFileContents(
-				initialFileContents.Filename,
+				initialFileContents.RelativePath,
 				initialFileContents.LastModified,
 				engine.TransformToCss(initialFileContents.Content, null).Replace("}", "}\n")
 			);
