@@ -201,7 +201,7 @@ namespace UnitTests
 					if ((xi == null) || (yi == null))
 						return false;
 					if (!xi.Declaration.Equals(yi.Declaration, StringComparison.InvariantCultureIgnoreCase)
-					|| !xi.Filename.Equals(yi.Filename, StringComparison.InvariantCultureIgnoreCase)
+					|| !xi.RelativePath.Equals(yi.RelativePath, StringComparison.InvariantCultureIgnoreCase)
 					|| !(xi.MediaOverride ?? "").Equals((yi.MediaOverride ?? ""), StringComparison.InvariantCultureIgnoreCase))
 						return false;
 				}
