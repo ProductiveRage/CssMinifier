@@ -49,7 +49,7 @@ namespace CSSMinifier.FileLoaders
 			return new TextFileContents(
 				initialFileContents.RelativePath,
 				initialFileContents.LastModified,
-				engine.TransformToCss(initialFileContents.Content, null).Replace("}", "}\n")
+				engine.TransformToCss(initialFileContents.Content, null)
 			);
 		}
 
