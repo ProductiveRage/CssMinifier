@@ -81,15 +81,15 @@ namespace CSSMinifier.FileLoaders
 			{
 				// Ensure that the imported stylesheet is not a relative or absolute path or an external url
 				var removeImport = false;
-				if (importDeclaration2.Filename.Contains("\\") || importDeclaration2.Filename.Contains("/"))
+				if (importDeclaration2.RelativePath.Contains("\\") || importDeclaration2.RelativePath.Contains("/"))
 				{
 					if (_unsupportedImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
 					{
-						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration2.Filename + " (it has been removed)");
+						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration2.RelativePath + " (it has been removed)");
 						removeImport = true;
 					}
 					else
-						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration2.Filename);
+						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration2.RelativePath);
 				}
 
 				// If the original file has a relative path (eg. "styles/Test1.css") then we'll need to include that path in the import filename (eg. "Test2.css"
@@ -105,14 +105,14 @@ namespace CSSMinifier.FileLoaders
 				{
 					importDeclarationWithConsistentFilename = new StylesheetImportDeclaration(
 						importDeclaration2.Declaration,
-						relativePath.Substring(0, breakPoint + 1) + importDeclaration2.Filename,
+						relativePath.Substring(0, breakPoint + 1) + importDeclaration2.RelativePath,
 						importDeclaration2.MediaOverride
 					);
 				}
 
 				// Ensure that the requested stylesheet has not been requested further up the chain - if so, throw a CircularStylesheetImportException rather than
 				// waiting for a StackOverflowException to occur (or log a warning and remove the import, depending upon specified behaviour options)
-				if (importChain.Any(f => f.Equals(importDeclarationWithConsistentFilename.Filename, StringComparison.InvariantCultureIgnoreCase)))
+				if (importChain.Any(f => f.Equals(importDeclarationWithConsistentFilename.RelativePath, StringComparison.InvariantCultureIgnoreCase)))
 				{
 					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
 					{
@@ -120,14 +120,14 @@ namespace CSSMinifier.FileLoaders
 							LogLevel.Warning,
 							() => string.Format(
 								"Circular import encountered: {0} (it has been removed from {1})",
-								importDeclarationWithConsistentFilename.Filename,
+								importDeclarationWithConsistentFilename.RelativePath,
 								relativePath
 							)
 						);
 						removeImport = true;
 					}
 					else
-						throw new CircularStylesheetImportException("Circular stylesheet import detected for file: " + importDeclarationWithConsistentFilename.Filename);
+						throw new CircularStylesheetImportException("Circular stylesheet import detected for file: " + importDeclarationWithConsistentFilename.RelativePath);
 				}
 
 				// Retrieve the content from imported file, wrap it in a media query if required and replace the import declaration with the content
@@ -136,12 +136,12 @@ namespace CSSMinifier.FileLoaders
 				{
 					// If we want to ignore this import (meaning it's invalid and DifferentFolderImportBehaviourOptions is to log and proceed instead of throw an
 					// exception) then we just want to replace the dodgy import with blank content
-					importedFileContent = new TextFileContents(importDeclarationWithConsistentFilename.Filename, DateTime.MinValue, "");
+					importedFileContent = new TextFileContents(importDeclarationWithConsistentFilename.RelativePath, DateTime.MinValue, "");
 				}
 				else
 				{
 					importedFileContent = GetCombinedContent(
-						importDeclarationWithConsistentFilename.Filename,
+						importDeclarationWithConsistentFilename.RelativePath,
 						importChain.Add(combinedContentFile.RelativePath)
 					);
 				}
@@ -266,15 +266,15 @@ namespace CSSMinifier.FileLoaders
 		/// </summary>
 		public class StylesheetImportDeclaration
 		{
-			public StylesheetImportDeclaration(string declaration, string filename, string mediaOverride)
+			public StylesheetImportDeclaration(string declaration, string relativePath, string mediaOverride)
 			{
 				if (string.IsNullOrWhiteSpace(declaration))
 					throw new ArgumentException("Null/blank importDeclaration specified");
-				if (string.IsNullOrWhiteSpace(filename))
-					throw new ArgumentException("Null/blank filename specified");
+				if (string.IsNullOrWhiteSpace(relativePath))
+					throw new ArgumentException("Null/blank relativePath specified");
 
 				Declaration = declaration;
-				Filename = filename;
+				RelativePath = relativePath;
 				MediaOverride = string.IsNullOrWhiteSpace(mediaOverride) ? null : mediaOverride.ToString();
 			}
 
@@ -286,7 +286,7 @@ namespace CSSMinifier.FileLoaders
 			/// <summary>
 			/// This will never be null or empty
 			/// </summary>
-			public string Filename { get; private set; }
+			public string RelativePath { get; private set; }
 
 			/// <summary>
 			/// This may be null but it will never be empty
