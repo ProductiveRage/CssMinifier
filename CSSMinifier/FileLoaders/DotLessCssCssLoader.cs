@@ -43,7 +43,8 @@ namespace CSSMinifier.FileLoaders
 			var engine = new LessEngine(
 				new Parser(),
 				new DotLessCssPassThroughLogger(_logger),
-				_minificationType == LessCssMinificationTypeOptions.Minify
+				_minificationType == LessCssMinificationTypeOptions.Minify,
+				false // Debug
 			);
 			return new TextFileContents(
 				initialFileContents.RelativePath,
@@ -63,31 +64,31 @@ namespace CSSMinifier.FileLoaders
 				_logger = logger;
 			}
 
-			public void Debug(string message)
+			public void Debug(string message, params object[] args)
 			{
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Debug, () => string.Format(message, args));
 			}
 
-			public void Error(string message)
+			public void Error(string message, params object[] args)
 			{
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Error, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Error, () => string.Format(message, args));
 			}
 
-			public void Info(string message)
+			public void Info(string message, params object[] args)
 			{
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Info, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Info, () => string.Format(message, args));
 			}
 
-			public void Log(dotless.Core.Loggers.LogLevel level, string message)
+			public void Log(dotless.Core.Loggers.LogLevel level, string message, params object[] args)
 			{
 				if (string.IsNullOrWhiteSpace(message))
 					return;
@@ -116,13 +117,19 @@ namespace CSSMinifier.FileLoaders
 				}
 			}
 
-			public void Warn(string message)
+			public void Warn(string message, params object[] args)
 			{
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.LogIgnoringAnyError(Logging.LogLevel.Warning, () => message);
+				_logger.LogIgnoringAnyError(Logging.LogLevel.Warning, () => string.Format(message, args));
 			}
+
+			public void Log(dotless.Core.Loggers.LogLevel level, string message) { Log(level, message, new object[0]); }
+			public void Debug(string message) { Debug(message, new object[0]); }
+			public void Error(string message) { Error(message, new object[0]); }
+			public void Info(string message) { Info(message, new object[0]); }
+			public void Warn(string message) { Warn(message, new object[0]); }
 		}
 	}
 }
