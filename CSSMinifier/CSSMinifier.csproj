@@ -34,6 +34,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CSSParser">
+      <HintPath>..\External Dependencies\CSSParser\CSSParser.dll</HintPath>
+    </Reference>
     <Reference Include="dotless.Core">
       <HintPath>..\External Dependencies\DotLessCss\dotless.Core.dll</HintPath>
     </Reference>
@@ -48,6 +51,8 @@
   <ItemGroup>
     <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
+    <Compile Include="FileLoaders\InjectedIdTidyingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\LessCssLineNumberingTextFileLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFolderLastModifiedDateRetriever.cs" />
     <Compile Include="LastModifiedDateRetrievers\ILastModifiedDateRetriever.cs" />
     <Compile Include="FileLoaders\ITextFileLoader.cs" />
