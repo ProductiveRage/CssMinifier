@@ -21,7 +21,7 @@ namespace CSSMinifier.FileLoaders
 		private ErrorBehaviourOptions _circularReferenceImportBehaviour, _unsupportedImportBehaviour;
 		private ILogEvents _logger;
 		public SameFolderImportFlatteningCssLoader(
-				ITextFileLoader contentLoader,
+			ITextFileLoader contentLoader,
 			ErrorBehaviourOptions circularReferenceImportBehaviour,
 			ErrorBehaviourOptions unsupportedImportBehaviour,
 			ILogEvents logger)
