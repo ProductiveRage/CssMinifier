@@ -80,7 +80,10 @@ namespace CSSMinifierDemo.Controllers
 			}
 
 			var importFlatteningCssLoader = new SameFolderImportFlatteningCssLoader(
-				new SimpleTextFileContentLoader(relativePathMapper),
+				new LessCssCommentRemovingTextFileLoader(
+					new SimpleTextFileContentLoader(relativePathMapper)
+				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
 				new NullLogger()

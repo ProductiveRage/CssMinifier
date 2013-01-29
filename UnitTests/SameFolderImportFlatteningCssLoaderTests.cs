@@ -22,6 +22,7 @@ namespace UnitTests
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()
@@ -43,6 +44,7 @@ namespace UnitTests
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport1),
 					new TextFileContents("Test2.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport2)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()
@@ -62,6 +64,7 @@ namespace UnitTests
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()
@@ -81,6 +84,7 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()
@@ -105,6 +109,7 @@ namespace UnitTests
 					new TextFileContents("Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()
@@ -130,6 +135,7 @@ namespace UnitTests
 					new TextFileContents("/Styles/Test.css", new DateTime(2011, 11, 26, 14, 07, 29), content),
 					new TextFileContents("/Styles/Test1.css", new DateTime(2011, 11, 26, 14, 07, 29), contentImport)
 				),
+				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException,
 				new NullLogger()

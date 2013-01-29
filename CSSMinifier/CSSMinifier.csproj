@@ -52,6 +52,7 @@
     <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
     <Compile Include="FileLoaders\InjectedIdTidyingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\LessCssCommentRemovingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssLineNumberingTextFileLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFolderLastModifiedDateRetriever.cs" />
     <Compile Include="LastModifiedDateRetrievers\ILastModifiedDateRetriever.cs" />
