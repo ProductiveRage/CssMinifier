@@ -17,17 +17,21 @@ namespace CSSMinifier.FileLoaders
 	/// </summary>
 	public class SameFolderImportFlatteningCssLoader : ITextFileLoader
 	{
-		private ITextFileLoader _contentLoader;
-		private ErrorBehaviourOptions _circularReferenceImportBehaviour, _unsupportedImportBehaviour;
-		private ILogEvents _logger;
+		private readonly ITextFileLoader _contentLoader;
+		private readonly ContentLoaderCommentRemovalBehaviourOptions _contentLoaderCommentRemovalBehaviour;
+		private readonly ErrorBehaviourOptions _circularReferenceImportBehaviour, _unsupportedImportBehaviour;
+		private readonly ILogEvents _logger;
 		public SameFolderImportFlatteningCssLoader(
 			ITextFileLoader contentLoader,
+			ContentLoaderCommentRemovalBehaviourOptions contentLoaderCommentRemovalBehaviour,
 			ErrorBehaviourOptions circularReferenceImportBehaviour,
 			ErrorBehaviourOptions unsupportedImportBehaviour,
 			ILogEvents logger)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
+			if (!Enum.IsDefined(typeof(ContentLoaderCommentRemovalBehaviourOptions), contentLoaderCommentRemovalBehaviour))
+				throw new ArgumentOutOfRangeException("contentLoaderCommentRemovalBehaviour");
 			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), circularReferenceImportBehaviour))
 				throw new ArgumentOutOfRangeException("circularReferenceImportBehaviour");
 			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), unsupportedImportBehaviour))
@@ -36,9 +40,26 @@ namespace CSSMinifier.FileLoaders
 				throw new ArgumentNullException("logger");
 
 			_contentLoader = contentLoader;
+			_contentLoaderCommentRemovalBehaviour = contentLoaderCommentRemovalBehaviour;
 			_circularReferenceImportBehaviour = circularReferenceImportBehaviour;
 			_unsupportedImportBehaviour = unsupportedImportBehaviour;
 			_logger = logger;
+		}
+
+		public enum ContentLoaderCommentRemovalBehaviourOptions
+		{
+			/// <summary>
+			/// If this is specified then no additional processing will be done by the SameFolderImportFlatteningCssLoader instance to remove comments. This should be
+			/// the case when LESS stylesheets are imported as this class will not strip single-line comments that LESS supports, only the multiline comments that
+			/// standard CSS supports.
+			/// </summary>
+			CommentsAreAlreadyRemoved,
+
+			/// <summary>
+			/// If this is specified then additional processing will be done by the SameFolderImportFlatteningCssLoader instance to remove comments (in order to ensure
+			/// that imports within comments have their content included). Only standard-CSS multiline comments are removed.
+			/// </summary>
+			ContentIsUnprocessed
 		}
 
 		public enum ErrorBehaviourOptions
@@ -74,9 +95,9 @@ namespace CSSMinifier.FileLoaders
 			if (importChain == null)
 				throw new ArgumentNullException("importChain");
 
-			var combinedContentFile = RemoveComments(
-				_contentLoader.Load(relativePath)
-			);
+			var combinedContentFile = _contentLoader.Load(relativePath);
+			if (_contentLoaderCommentRemovalBehaviour == ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed)
+				combinedContentFile = RemoveCSSComments(combinedContentFile);
 			foreach (var importDeclaration in GetImportDeclarations(combinedContentFile.Content))
 			{
 				// Ensure that the imported stylesheet is not a relative or absolute path or an external url
@@ -170,8 +191,8 @@ namespace CSSMinifier.FileLoaders
 			return combinedContentFile;
 		}
 
-		private static readonly Regex CommentRemover = new Regex(@"/\*[\d\D]*?\*/", RegexOptions.Compiled);
-		private TextFileContents RemoveComments(TextFileContents content)
+		private static readonly Regex CSSCommentRemover = new Regex(@"/\*[\d\D]*?\*/", RegexOptions.Compiled);
+		private TextFileContents RemoveCSSComments(TextFileContents content)
 		{
 			if (content == null)
 				throw new ArgumentNullException("content");
@@ -179,7 +200,7 @@ namespace CSSMinifier.FileLoaders
 			return new TextFileContents(
 				content.RelativePath,
 				content.LastModified,
-				CommentRemover.Replace(content.Content + "/**/", "") // Ensure that any unclosed comments are handled
+				CSSCommentRemover.Replace(content.Content + "/**/", "") // Ensure that any unclosed comments are handled
 			);
 		}
 
