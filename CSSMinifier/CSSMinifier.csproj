@@ -50,6 +50,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\ContentReplacingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\LessCssOpeningBodyTagRenamer.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
     <Compile Include="FileLoaders\InjectedIdTidyingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssCommentRemovingTextFileLoader.cs" />
