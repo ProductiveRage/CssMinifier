@@ -17,7 +17,7 @@ namespace CSSMinifier.FileLoaders
 
 			RelativePath = relativePath.Trim();
 			LastModified = lastModified;
-			Content = content.Trim();
+			Content = content;
 		}
 
 		/// <summary>
