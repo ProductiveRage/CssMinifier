@@ -11,7 +11,7 @@ namespace CSSMinifier.FileLoaders
 	/// If a LESS stylesheet wraps all of its styles in a body tag (eg. "body { /* All content here */ }") to restrict the scope of any LESS values and mixins, then it
 	/// may be desirable to remove the body tags that will consequently prepend all of the generated CSS selectors. This can be achieved by wrapping the ITextFileLoader
 	/// instances that load individual files in a LessCssOpeningBodyTagRenamer and replacing the body tag with a particular string that can be removed by a
-	/// ContentReplacingTextFileLoader when the processing and content minification is otherwise complete. Note: The string that is inserted  in place of
+	/// ContentReplacingTextFileLoader when the processing and content minification is otherwise complete. Note: The string that is inserted in place of
 	/// the body tag should appear to be a valid selector otherwise the LESS processor may be unable to process the content.
 	/// </summary>
 	public class LessCssOpeningBodyTagRenamer : ITextFileLoader

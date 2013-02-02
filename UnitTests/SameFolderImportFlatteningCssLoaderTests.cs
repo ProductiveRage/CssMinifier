@@ -15,7 +15,7 @@ namespace UnitTests
 		{
 			var content = "@import url(\"Test1.css\");\r\np { color: blue; }\r\n\r\n";
 			var contentImport = "p { color: red; }\r\n\r\n";
-			var expected = "p { color: red; }\r\np { color: blue; }";
+			var expected = "p { color: red; }\r\n\r\n\r\np { color: blue; }\r\n\r\n";
 
 			var contentLoader = new SameFolderImportFlatteningCssLoader(
 				new FixedListCssContentLoader(
@@ -36,7 +36,7 @@ namespace UnitTests
 			var content = "@import url(\"Test1.css\");\r\np { color: blue; }\r\n\r\n";
 			var contentImport1 = "@import url(\"Test2.css\");\r\np { color: red; }\r\n\r\n";
 			var contentImport2 = "p { color: yellow; }\r\n\r\n";
-			var expected = "p { color: yellow; }\r\np { color: red; }\r\np { color: blue; }";
+			var expected = "p { color: yellow; }\r\n\r\n\r\np { color: red; }\r\n\r\n\r\np { color: blue; }\r\n\r\n";
 
 			var contentLoader = new SameFolderImportFlatteningCssLoader(
 				new FixedListCssContentLoader(
@@ -57,7 +57,7 @@ namespace UnitTests
 		{
 			var content = "@import url(\"Test1.css\");\r\n@import url(\"Test1.css\");\r\np { color: blue; }\r\n\r\n";
 			var contentImport = "p { color: red; }\r\n\r\n";
-			var expected = "p { color: red; }\r\np { color: red; }\r\np { color: blue; }";
+			var expected = "p { color: red; }\r\n\r\n\r\np { color: red; }\r\n\r\n\r\np { color: blue; }\r\n\r\n";
 
 			var contentLoader = new SameFolderImportFlatteningCssLoader(
 				new FixedListCssContentLoader(
