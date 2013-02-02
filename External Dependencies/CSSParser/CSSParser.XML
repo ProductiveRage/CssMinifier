@@ -89,13 +89,19 @@
         <member name="M:CSSParser.Parser.ParseCSS(System.String)">
             <summary>
             This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
-            CSS does not support single line comment, unlike LESS CSS.
+            CSS does not support single line comment, unlike LESS CSS. The content parsing is deferred so that the work to parse the content
+            is only performed as the returned data is enumerated over. All runs of characters that are of the same CharacterCategorisationOptions
+            will be combined into one string (note: this means that runs of opening braces that aren't separated by whitespace will be combined
+            into one string containing those multiple braces).
             </summary>
         </member>
         <member name="M:CSSParser.Parser.ParseLESS(System.String)">
             <summary>
             This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
-            LESS CSS supports single line comments as well the multiline comment format supported by standard CSS.
+            LESS CSS supports single line comments as well the multiline comment format supported by standard CSS. The content parsing is
+            deferred so that the work to parse the content is only performed as the returned data is enumerated over. All runs of characters
+            that are of the same CharacterCategorisationOptions will be combined into one string (note: this means that runs of opening braces
+            that aren't separated by whitespace will be combined into one string containing those multiple braces).
             </summary>
         </member>
         <member name="T:CSSParser.ContentProcessors.CharacterProcessors.MediaQuerySegment">
@@ -118,7 +124,8 @@
             <summary>
             This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances. This implementation will only parse the
             content while the returned set is being enumerated (so if only the start of the content is being examined then the work to parse the rest of the content
-            need not be performed).
+            need not be performed). All runs of characters that are of the same CharacterCategorisationOptions will be combined into one string (note: this means
+            that runs of opening braces that aren't separated by whitespace will be combined into one string containing those multiple braces).
             </summary>
         </member>
         <member name="M:CSSParser.ContentProcessors.StringProcessors.ProcessedCharactersGrouper.GetStrings(CSSParser.StringNavigators.IWalkThroughStrings,CSSParser.ContentProcessors.CharacterProcessors.IProcessCharacters)">
