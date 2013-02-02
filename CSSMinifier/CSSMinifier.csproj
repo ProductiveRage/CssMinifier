@@ -56,6 +56,7 @@
     <Compile Include="FileLoaders\InjectedIdTidyingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssCommentRemovingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssLineNumberingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\MediaQueryGroupingCssLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFolderLastModifiedDateRetriever.cs" />
     <Compile Include="LastModifiedDateRetrievers\ILastModifiedDateRetriever.cs" />
     <Compile Include="FileLoaders\ITextFileLoader.cs" />
