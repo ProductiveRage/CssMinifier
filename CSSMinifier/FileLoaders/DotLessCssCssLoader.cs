@@ -8,20 +8,28 @@ namespace CSSMinifier.FileLoaders
 {
 	public class DotLessCssCssLoader : ITextFileLoader
 	{
-		private ITextFileLoader _contentLoader;
-		private LessCssMinificationTypeOptions _minificationType;
-		private ILogEvents _logger;
-		public DotLessCssCssLoader(ITextFileLoader contentLoader, LessCssMinificationTypeOptions minificationType, ILogEvents logger)
+		private readonly ITextFileLoader _contentLoader;
+		private readonly LessCssMinificationTypeOptions _minificationType;
+		private readonly ReportedErrorBehaviourOptions _reportedErrorBehaviour;
+		private readonly ILogEvents _logger;
+		public DotLessCssCssLoader(
+			ITextFileLoader contentLoader,
+			LessCssMinificationTypeOptions minificationType,
+			ReportedErrorBehaviourOptions reportedErrorBehaviour,
+			ILogEvents logger)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
 			if (!Enum.IsDefined(typeof(LessCssMinificationTypeOptions), minificationType))
 				throw new ArgumentOutOfRangeException("minificationType");
+			if (!Enum.IsDefined(typeof(ReportedErrorBehaviourOptions), reportedErrorBehaviour))
+				throw new ArgumentOutOfRangeException("reportedErrorBehaviour");
 			if (logger == null)
 				throw new ArgumentNullException("logger");
 
 			_contentLoader = contentLoader;
 			_minificationType = minificationType;
+			_reportedErrorBehaviour = reportedErrorBehaviour;
 			_logger = logger;
 		}
 
@@ -29,6 +37,12 @@ namespace CSSMinifier.FileLoaders
 		{
 			DoNotMinify,
 			Minify
+		}
+
+		public enum ReportedErrorBehaviourOptions
+		{
+			LogAndContinue,
+			LogAndRaiseException
 		}
 
 		/// <summary>
@@ -42,7 +56,7 @@ namespace CSSMinifier.FileLoaders
 			var initialFileContents = _contentLoader.Load(relativePath);
 			var engine = new LessEngine(
 				new Parser(),
-				new DotLessCssPassThroughLogger(_logger),
+				new DotLessCssPassThroughLogger(_logger, _reportedErrorBehaviour),
 				_minificationType == LessCssMinificationTypeOptions.Minify,
 				false // Debug
 			);
@@ -55,13 +69,17 @@ namespace CSSMinifier.FileLoaders
 
 		private class DotLessCssPassThroughLogger : ILogger
 		{
-			private ILogEvents _logger;
-			public DotLessCssPassThroughLogger(ILogEvents logger)
+			private readonly ILogEvents _logger;
+			private readonly ReportedErrorBehaviourOptions _reportedErrorBehaviour;
+			public DotLessCssPassThroughLogger(ILogEvents logger, ReportedErrorBehaviourOptions reportedErrorBehaviour)
 			{
 				if (logger == null)
 					throw new ArgumentNullException("logger");
+				if (!Enum.IsDefined(typeof(ReportedErrorBehaviourOptions), reportedErrorBehaviour))
+					throw new ArgumentOutOfRangeException("reportedErrorBehaviour");
 
 				_logger = logger;
+				_reportedErrorBehaviour = reportedErrorBehaviour;
 			}
 
 			public void Debug(string message, params object[] args)
@@ -78,6 +96,9 @@ namespace CSSMinifier.FileLoaders
 					return;
 
 				_logger.Log(Logging.LogLevel.Error, DateTime.Now, () => string.Format(message, args), null);
+				
+				if (_reportedErrorBehaviour == ReportedErrorBehaviourOptions.LogAndRaiseException)
+					throw new Exception("dotLess parsing error: " + message);
 			}
 
 			public void Info(string message, params object[] args)

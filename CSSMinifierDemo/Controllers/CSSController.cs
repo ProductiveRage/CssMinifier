@@ -90,7 +90,14 @@ namespace CSSMinifierDemo.Controllers
 			);
 			ITextFileLoader cssLoader;
 			if (relativePath.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
-				cssLoader = new DotLessCssCssLoader(importFlatteningCssLoader, DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify, new NullLogger());
+			{
+				cssLoader = new DotLessCssCssLoader(
+					importFlatteningCssLoader,
+					DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
+					DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndRaiseException,
+					new NullLogger()
+				);
+			}
 			else
 				cssLoader = new MinifyingCssLoader(importFlatteningCssLoader);
 			var modifiedDateCachingCssLoader = new CachingTextFileLoader(
