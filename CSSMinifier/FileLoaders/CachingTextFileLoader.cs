@@ -54,7 +54,14 @@ namespace CSSMinifier.FileLoaders
 
 			// Do the work and cache the result
 			var content = _contentLoader.Load(relativePath);
-			_cache.Add(cacheKey, content);
+			_cache.Add(
+				cacheKey,
+				new TextFileContents(
+					relativePath,
+					_lastModifiedDateRetriever.GetLastModifiedDate(relativePath),
+					content.Content
+				)
+			);
 			return content;
 		}
 	}
