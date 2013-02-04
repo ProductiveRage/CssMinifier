@@ -3,6 +3,12 @@ using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
 
 namespace CSSMinifier.FileLoaders
 {
+	/// <summary>
+	/// This caching content loader requires an ILastModifiedDateRetriever implementation as it may not be sufficient to take the LastModified date of the content that
+	/// the wrapped loader provides - eg. if a stylesheet includes other stylesheets, then the last modified dates of these need to be taken into account. The
+	/// recommended approach (for cases where imports are to be flattened) is to use a SameFolderImportFlatteningCssLoader and then provide an
+	/// ILastModifiedDateRetriever that takes the most recent of any file in the source folder.
+	/// </summary>
 	public class CachingTextFileLoader : ITextFileLoader
 	{
 		private ITextFileLoader _contentLoader;
