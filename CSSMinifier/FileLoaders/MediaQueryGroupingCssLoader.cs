@@ -54,7 +54,7 @@ namespace CSSMinifier.FileLoaders
 			var mediaQueryDefinitionBuffer = new StringBuilder();
 			var mediaQueryWrappedContent = new Dictionary<string, List<CategorisedCharacterString>>();
 			var processingStateDetails = new ProcessStateDetails(ProcessingStateOptions.InNonMediaQueryWrappedContent, null);
-			foreach (var segment in Parser.ParseCSS(content).SelectMany(s => BreakSegmentIntoCharactersIfOpeningOrClosingBrace(s)))
+			foreach (var segment in Parser.ParseCSS(content))
 			{
 				// If we're in a media query header, have we reach the open brace for the media-query-wrapped content? If so, then update the
 				// processingStateDetails and move on. If not, then add to the media query header content and move on.
@@ -154,27 +154,6 @@ namespace CSSMinifier.FileLoaders
 				restructuredContentBuilder.Append("}");
 			}
 			return restructuredContentBuilder.ToString();
-		}
-
-		/// <summary>
-		/// We need to consider all opening and closing braces individually, but the ParseCSS method that we use to process the content will
-		/// group together all characters of the same CharacterCategorisationOptions. This will break out the 
-		/// </summary>
-		private IEnumerable<CategorisedCharacterString> BreakSegmentIntoCharactersIfOpeningOrClosingBrace(CategorisedCharacterString segment)
-		{
-			if (segment == null)
-				throw new ArgumentNullException("segment");
-
-			if ((segment.CharacterCategorisation != CharacterCategorisationOptions.OpenBrace)
-			&& (segment.CharacterCategorisation != CharacterCategorisationOptions.CloseBrace))
-				return new[] { segment };
-
-			return Enumerable.Range(0, segment.Value.Length)
-				.Select(i => new CategorisedCharacterString(
-					segment.Value.Substring(0, 1),
-					segment.IndexInSource + i,
-					segment.CharacterCategorisation
-				));
 		}
 
 		private class ProcessStateDetails
