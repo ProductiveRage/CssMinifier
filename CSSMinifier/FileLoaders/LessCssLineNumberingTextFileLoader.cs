@@ -63,7 +63,7 @@ namespace CSSMinifier.FileLoaders
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
 
-			// Standardlise line breaks to newline characters only
+			// Standardise line breaks to newline characters only
 			content = content.Replace("\r\n", "\n").Replace('\r', '\n');
 
 			// We're going to process backwards through the data so we need the total number of lines there are so that we know the number line we're starting on
@@ -173,15 +173,17 @@ namespace CSSMinifier.FileLoaders
 			private static char[] _declarationHeaderTerminators_MarkerInserting = new[]
 			{
 				'}', // Expect this to be the end of another style block, the current style declaration header has terminated
+				':', // Indicates we've entered a style block - a property is being set rather than nested selectors being defined
 				';'  // This could be the end of a LessCSS variable declaration, the current style declaration header has terminated
 			};
 			private static char[] _declarationHeaderTerminators_NonMarkerInserting = new[]
 			{
-				')'  // Indicates that the declaration header is a LessCSS parameterised mixin, we don't want mark these
+				')', // Indicates that the declaration header is a LessCSS parameterised mixin or a media query, we don't want mark these
+				'@'  // Also indicates a media query (without parameters, otherwise the close bracket would have got it - eg. "@media print")
 			};
-			private static char[] _declarationHeaderTerminators_Reset = new[]
+			private static char[] _declarationHeaderTerminators_Reset = new char[]
 			{
-				'{'  // Presumably part of a nested LessCSS style block, reset since we weren't in the top-level declaration header
+				'{'  // Presumably part of a nested LessCSS style block, reset to mark the current header and potentially track the next
 			};
 
 			private readonly int _declarationHeaderLineNumberOffset;
@@ -203,11 +205,21 @@ namespace CSSMinifier.FileLoaders
 					return AnalysisResult.InsertBeforeCurrentCharacter(_declarationHeaderLineNumberOffset, new StandardContentAnalyser());
 
 				if (_declarationHeaderTerminators_MarkerInserting.Contains(currentCharacter))
+				{
+					// This terminator indicate the end of the header and suggests a return back to standard content (ie. not a header / css selector)
 					return AnalysisResult.InsertAfterCurrentCharacter(_declarationHeaderLineNumberOffset, new StandardContentAnalyser());
+				}
 				else if (_declarationHeaderTerminators_NonMarkerInserting.Contains(currentCharacter))
+				{
+					// This terminator indicates that we weren't in a css selector at all (so no marker will be generated)
 					return AnalysisResult.NoInsertion(new StandardContentAnalyser());
+				}
 				else if (_declarationHeaderTerminators_Reset.Contains(currentCharacter))
-					return AnalysisResult.NoInsertion(new DeclarationHeaderAnalyser());
+				{
+					// If we hit a reset terminator then the current content (if any) should result in a marker being generated, as may the following content (eg. this
+					// marker could be for a selector nested inside another)
+					return AnalysisResult.InsertAfterCurrentCharacter(_declarationHeaderLineNumberOffset, new DeclarationHeaderAnalyser());
+				}
 
 				// If we've encountered a line break then we'll need to add one the marker line number offset - if there's loads of new lines between a declaration header
 				// and the preceding content, the line number indicated in the marker should point to a line that includes part of the declaration header rather than

@@ -7,26 +7,12 @@ namespace CSSMinifier.FileLoaders
 {
 	/// <summary>
 	/// This is intended as a complement to the LessCssLineNumberingStyleSheetProcessor when used with LESS-supported nested style selectors - in this scenario, too many
-	/// line number markers will be present in the final content -
-	///   eg.
-	///     div.Wrapper {
-	///       h2 {
-	///         font-weight: bold;
-	///       }
-	///     }
-	///   may become (with marker insertion)
-	///     #Test1.css_1, div.Wrapper {
-	///       #Test1.css_2, h2 {
-	///         font-weight: bold;
-	///       }
-	///     }
-	///   which is translated (by the dotLess Compiler into)
-	///     #Test1.css_1 #Test1.css_2, div.Wrapper #Test1.css_2, #Test1.css_1 h2, div.Wrapper h2 { font-weight: bold; }
-	///   of which only the last two selectors are desirable (the third selector because it indicates the location of the style and the fourth selector since it's the
-	///   actual style which was declared in the first place!).
-	///   
-	/// This will take the list of HtmlId-esque marker insertions (of the form "#id,") that have been inserted into the content and will remove selectors that are
-	/// generated that are not of benefit to the final content (the first and second selectors in the translated content in the example above).
+	/// line number markers will be present in the final content if markers are injected into nested selectors. This will take the list of HtmlId-esque marker insertions
+	/// (of the form "#id," or "#filename.css_n,") that have been inserted into the content and will remove selectors that are generated that are not of benefit to the
+	/// ginal content (the only remaining selectors should be those present in the pre-marker-injected content and the most specific marker for each selector). See the
+	/// TidySelectorContent method's comment for an example (or refer to the unit tests).
+	/// - The markers should always start with "#", end with "," and have alphanumeric content with optional use of "_", "-" or "."  (anything else can not be guaranteed
+	///   to work with this process)
 	/// </summary>
 	public class InjectedIdTidyingTextFileLoader : ITextFileLoader
 	{
@@ -156,32 +142,95 @@ namespace CSSMinifier.FileLoaders
 			if (insertedIdsArray.Any(id => id == null))
 				throw new ArgumentException("Null reference encountered in insertedIds set");
 
-			// Maintain if selector contains no inserted markers (eg. section div.Whatever h2)
-			//    eg. "section div.Whatever h2"
-			// - This will always be the case with the last entry since markers are always inserted into the start of selector chains
+			// Example content before marker injection:
+			// 
+			//   section {
+			//     div.Whatever {
+			//       color: black;
+			//       h2 { font-weight: bold; }
+			//     }
+			//   }
+			//
+			// After marker injection (the line the markers would appear on has been tweaked for readability, but the content remains):
+			//
+			//   #test1.css_1, section {
+			//     #test1.css_2, div.Whatever {
+			//       color: black;
+			//       #test1.css_4, h2 { font-weight: bold; }
+			//     }
+			//   }
+			//
+			// After LESS compilation has flattened the nested selectors:
+			//
+			//   #test1.css_1 #test1.css_2,
+			//   #test1.css_1 div.Whatever,
+			//   section #test1.css_2,
+			//   section div.Whatever { color: black; }
+			//
+			//   #test1.css_1 #test1.css_2 #test1.css_4,
+			//   #test1.css_1 div.Whatever #test1.css_4,
+			//   section #test1.css_2 #test1.css_4,
+			//   section div.Whatever #test1.css_4,
+			//   #test1.css_1 #test1.css_2 h2,
+			//   #test1.css_1 div.Whatever h2,
+			//   section #test1.css_2 h2,
+			//   section div.Whatever h2 { font-weight: bold; }
+			//
+			// The desirable selectors from these are:
+			//
+			//   section #test1.css_2,
+			//   section div.Whatever { color: black; }
+			//
+			//   section div.Whatever #test1.css_4,
+			//   section div.Whatever h2 { font-weight: bold; }
+			//
+			// as the first of each pair indicates where the style block for those properties started (lines 2 and 4, resp) whilst the other selectors
+			// are only unwanted byproducts of the marker insertion and LESS' nested selector flattening, and should be removed
 
-			// Maintain if the penultimate selector segment is the ONLY inserted marker
-			//    eg. "#Test19.css_1 div.Whatever"
-			//    eg. "section #Test19.css_10 h2"
+			// RULE:
+			//  Maintain if selector contains no inserted markers (eg. section div.Whatever h2)
+			//    eg. "section div.Whatever h2"
+			//  - This will always be the case with the last entry since markers are always inserted into the start of selector chains
+
+			// RULE:
+			//  Maintain if the last selector segment is the ONLY inserted marker
+			//    eg. "section #test1.css_2"
+			//    eg. "section div.Whatever #test1.css_4"
 
 			// Selectors we don't want may be of the form
 			//    "#Test19.css_1 #Test19.css_10 h2"
 
+			// Note: If the selector doesn't appear to be due to a flattened nested selector chain then we want to keep it (otherwise, the injected
+			// markers against top-level / non-nested selectors will all be removed)
+			//   eg. "#Test19.css_1"
+
+			// Note: While "#" and "." may be used as part of the inserted marker, the child selector ">" may not and so we'll need to break on
+			// any whitespace AND the ">" symbol (this is protected against by the HtmlId constructor validation)
+
 			var tidiedSelectors = new List<string>();
 			foreach (var selector in cssSelector.Split(',').Select(s => s.Trim()).Where(s => s != ""))
 			{
-				// Passign a null char[] to Split will break the string on all whitespace
-				var selectorSegments = selector.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+				// Passing a null char[] to Split will break the string on all whitespace
+				var selectorSegments = selector.Split(SelectorBreakCharacters, StringSplitOptions.RemoveEmptyEntries);
 				if (selectorSegments.Length == 0)
 					continue;
+
+				// Always include non-nested segments (as they will either be genuine selectors which we need to maintain, or they will markers for
+				// a top-level selector - eg. "body { background: white; }" becomes "#test.css_1, body { background: white; }" and we want to keept
+				// the "#test.css_1" marker to indicate that the body style came from the indicated location
+				if (selectorSegments.Length == 1)
+				{
+					tidiedSelectors.Add(selector);
+					continue;
+				}
 
 				var shouldSelectorBeMaintained = true;
 				for (var index = 0; index < selectorSegments.Length; index++)
 				{
-					// The penultimate segment (for cases where there are more than one segment) may be an injected id but none of the others may be
-					// (if it's not an injected id, that doesn't matter - we allow it either way). If there is only one segment then this condition
-					// will never be entered.
-					if (index == (selectorSegments.Length - 2))
+					// The final segment (for cases where there are more than one segment) may be an injected id but none of the others may be (if
+					// it's not an injected id, that doesn't matter - we allow it either way). If there is only one segment then this condition
+					// will never be entered (see above).
+					if (index == (selectorSegments.Length - 1))
 						continue;
 
 					var selectorSegment = selectorSegments[index];
@@ -196,6 +245,15 @@ namespace CSSMinifier.FileLoaders
 			}
 			return string.Join(",", tidiedSelectors);
 		}
+
+		/// <summary>
+		/// We want to break selectors on any whitespace or on the child selector character (>)
+		/// </summary>
+		private readonly static char[] SelectorBreakCharacters =
+			Enumerable.Range((int)char.MinValue, (int)char.MaxValue)
+				.Select(c => (char)c)
+				.Where(c => char.IsWhiteSpace(c) || (c == '>'))
+				.ToArray();
 
 		/// <summary>
 		/// This will never return null, nor a set containing any nulls. It may return an empty set if no Ids have been reported as being inserted into the content.
@@ -236,12 +294,14 @@ namespace CSSMinifier.FileLoaders
 					throw new ArgumentNullException("Null/blank value specified");
 
 				// Not a lot of point going to town over the validation here, ensuring it's not blank, doesn't contain any whitespace part-way through and
-				// doesn't have a hash symbol in it should do the job fine
+				// doesn't have a hash or child selector symbol in it should do the job fine
 				value = value.Trim();
 				if (value.Any(c => char.IsWhiteSpace(c)))
 					throw new ArgumentException("Id values may not contain whitespace (other than leading and/or trailing whitespace, which will be stripped");
 				if (value.Contains('#'))
 					throw new ArgumentException("Id values may not contain the hash character");
+				if (value.Contains('>'))
+					throw new ArgumentException("Id values may not contain the child selector (\">\") character");
 
 				Value = value;
 			}
