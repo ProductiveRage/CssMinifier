@@ -122,7 +122,7 @@
         </member>
         <member name="T:CSSParser.ContentProcessors.StringProcessors.ProcessedCharactersGrouper">
             <summary>
-            This will use IWalkThroughStrings and IProcessCharacters to generatea a set of CategorisedCharacterString instances. This implementation will only parse the
+            This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances. This implementation will only parse the
             content while the returned set is being enumerated (so if only the start of the content is being examined then the work to parse the rest of the content
             need not be performed). Most runs of characters that are of the same CharacterCategorisationOptions will be combined into one string - the only types
             that will not be combined are CloseBrace, OpenBrace and SemiColon since it seems counter-intuitive when using the parsed content for this to be
