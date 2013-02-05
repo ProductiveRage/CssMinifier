@@ -87,7 +87,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.Log(Logging.LogLevel.Debug, DateTime.Now, () => string.Format(message, args), null);
+				_logger.Log(Logging.LogLevel.Debug, DateTime.Now, () => message, null);
 			}
 
 			public void Error(string message, params object[] args)
@@ -95,7 +95,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.Log(Logging.LogLevel.Error, DateTime.Now, () => string.Format(message, args), null);
+				_logger.Log(Logging.LogLevel.Error, DateTime.Now, () => message, null);
 				
 				if (_reportedErrorBehaviour == ReportedErrorBehaviourOptions.LogAndRaiseException)
 					throw new Exception("dotLess parsing error: " + message);
@@ -106,7 +106,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.Log(Logging.LogLevel.Info, DateTime.Now, () => string.Format(message, args), null);
+				_logger.Log(Logging.LogLevel.Info, DateTime.Now, () => message, null);
 			}
 
 			public void Log(dotless.Core.Loggers.LogLevel level, string message, params object[] args)
@@ -143,7 +143,7 @@ namespace CSSMinifier.FileLoaders
 				if (string.IsNullOrWhiteSpace(message))
 					return;
 
-				_logger.Log(Logging.LogLevel.Warning, DateTime.Now, () => string.Format(message, args), null);
+				_logger.Log(Logging.LogLevel.Warning, DateTime.Now, () => message, null);
 			}
 
 			public void Log(dotless.Core.Loggers.LogLevel level, string message) { Log(level, message, new object[0]); }
