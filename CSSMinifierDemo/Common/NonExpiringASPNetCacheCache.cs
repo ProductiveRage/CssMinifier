@@ -32,12 +32,12 @@ namespace CSSMinifierDemo.Common
 					return null;
 
 				var cachedTextFileContentsData = cachedData as TextFileContents;
-				if (cachedTextFileContentsData == null)
-				{
-					// If something's inserted invalid data into the cache then remove it, since whatever's call this getter will probably want to insert its own data
-					// after it does the work to generate it (and the Add method won't overwrite data already in the cache)
-					Remove(cacheKey);
-				}
+				if (cachedTextFileContentsData != null)
+					return cachedTextFileContentsData;
+				
+				// If something's inserted invalid data into the cache then remove it, since whatever's call this getter will probably want to insert its own data
+				// after it does the work to generate it (and the Add method won't overwrite data already in the cache)
+				Remove(cacheKey);
 				return null;
 			}
 		}
