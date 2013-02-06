@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
-using CSSMinifier.Lists;
 using CSSMinifier.Logging;
 
 namespace CSSMinifier.FileLoaders
@@ -78,7 +77,7 @@ namespace CSSMinifier.FileLoaders
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
 
-			return GetCombinedContent(relativePath, new NonNullImmutableList<string>());
+			return GetCombinedContent(relativePath, new string[0]);
 		}
 
 		/// <summary>
@@ -88,18 +87,25 @@ namespace CSSMinifier.FileLoaders
 		/// references defined by the imports, a CircularStylesheetImportException will be raised. The LastModified value on the returned data will be the most
 		/// recent date taken from all of the considered files.
 		/// </summary>
-		private TextFileContents GetCombinedContent(string relativePath, NonNullImmutableList<string> importChain)
+		private TextFileContents GetCombinedContent(string relativePath, IEnumerable<string> importChain)
 		{
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
 			if (importChain == null)
 				throw new ArgumentNullException("importChain");
 
+			var importChainArray = importChain.ToList();
+			if (importChainArray.Any(i => string.IsNullOrWhiteSpace(i)))
+				throw new ArgumentException("Null/blank entry encountered in importChain set");
+
 			var combinedContentFile = _contentLoader.Load(relativePath);
 			if (_contentLoaderCommentRemovalBehaviour == ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed)
 				combinedContentFile = RemoveCSSComments(combinedContentFile);
 			foreach (var importDeclaration in GetImportDeclarations(combinedContentFile.Content))
 			{
+				if (importDeclaration == null)
+					throw new Exception("Null reference encountered in data returned from GetImportDeclarations");
+
 				// Ensure that the imported stylesheet is not a relative or absolute path or an external url
 				var removeImport = false;
 				if (importDeclaration.RelativePath.Contains("\\") || importDeclaration.RelativePath.Contains("/"))
@@ -133,7 +139,7 @@ namespace CSSMinifier.FileLoaders
 
 				// Ensure that the requested stylesheet has not been requested further up the chain - if so, throw a CircularStylesheetImportException rather than
 				// waiting for a StackOverflowException to occur (or log a warning and remove the import, depending upon specified behaviour options)
-				if (importChain.Any(f => f.Equals(importDeclarationWithConsistentFilename.RelativePath, StringComparison.InvariantCultureIgnoreCase)))
+				if (importChainArray.Any(f => f.Equals(importDeclarationWithConsistentFilename.RelativePath, StringComparison.InvariantCultureIgnoreCase)))
 				{
 					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
 					{
@@ -163,7 +169,7 @@ namespace CSSMinifier.FileLoaders
 				{
 					importedFileContent = GetCombinedContent(
 						importDeclarationWithConsistentFilename.RelativePath,
-						importChain.Add(combinedContentFile.RelativePath)
+						importChainArray.Concat(new[] { combinedContentFile.RelativePath })
 					);
 				}
 				if ((importDeclarationWithConsistentFilename.MediaOverride != null) && !removeImport) // Don't bother wrapping an import that will be ignored in any media query content
@@ -235,16 +241,16 @@ namespace CSSMinifier.FileLoaders
 		/// <summary>
 		/// This will return a list of the import declarations within a valid css file's contents that has been stripped of comments (this method apples no processing
 		/// to handle comments so the content has commented-out import declaration, they will be included in the returned list). This is only public to enable unit
-		/// testing of this method.
+		/// testing of this method. This will never return null nor a set containing any null references.
 		/// </summary>
-		public static NonNullImmutableList<StylesheetImportDeclaration> GetImportDeclarations(string commentLessContent)
+		public static IEnumerable<StylesheetImportDeclaration> GetImportDeclarations(string commentLessContent)
 		{
 			if (commentLessContent == null)
 				throw new ArgumentNullException("minifiedContent");
 
 			commentLessContent = commentLessContent.Trim();
 			if (commentLessContent == "")
-				return new NonNullImmutableList<StylesheetImportDeclaration>();
+				return new StylesheetImportDeclaration[0];
 
 			// Note: The content needs a line return appending to the end just in case the last line is an import doesn't have a trailing semi-colon or line
 			// return of its own (the Regex won't pick it up otherwise)
@@ -257,7 +263,7 @@ namespace CSSMinifier.FileLoaders
 					match.Groups["media"].Value
 				));
 			}
-			return importDeclarations.ToNonNullImmutableList();
+			return importDeclarations;
 		}
 
 		[Serializable]

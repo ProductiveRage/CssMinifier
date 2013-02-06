@@ -65,10 +65,6 @@
     <Compile Include="FileLoaders\SimpleTextFileContentLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFileLastModifiedDateRetriever.cs" />
     <Compile Include="ICache.cs" />
-    <Compile Include="Lists\IEnumerable_Extensions.cs" />
-    <Compile Include="Lists\ImmutableList.cs" />
-    <Compile Include="Lists\IValueValidator.cs" />
-    <Compile Include="Lists\NonNullImmutableList.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Logging\ILogEvents.cs" />
     <Compile Include="Logging\ILogEvents_Extensions.cs" />
