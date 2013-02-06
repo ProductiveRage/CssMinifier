@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caching\ICacheThingsWithModifiedDates.cs" />
+    <Compile Include="Caching\IKnowWhenIWasLastModified.cs" />
+    <Compile Include="Caching\NullCache.cs" />
     <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
     <Compile Include="FileLoaders\ContentReplacingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssOpeningBodyTagRenamer.cs" />
@@ -64,7 +67,6 @@
     <Compile Include="FileLoaders\SameFolderImportFlatteningCssLoader.cs" />
     <Compile Include="FileLoaders\SimpleTextFileContentLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFileLastModifiedDateRetriever.cs" />
-    <Compile Include="ICache.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Logging\ILogEvents.cs" />
     <Compile Include="Logging\ILogEvents_Extensions.cs" />

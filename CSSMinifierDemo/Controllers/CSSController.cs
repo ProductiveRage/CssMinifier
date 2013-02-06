@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using CSSMinifier;
+using CSSMinifier.Caching;
 using CSSMinifier.FileLoaders;
 using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
 using CSSMinifier.Logging;
@@ -58,7 +58,11 @@ namespace CSSMinifierDemo.Controllers
 		/// will be identified as stale and re-generated. The cached content will likewise be invalidated and updated if any files in the folder have changed since the
 		/// date recorded for the cached data. GZip and Deflate compression of the response are supported where specified in Accept-Encoding request headers.
 		/// </summary>
-		private ActionResult Process(string relativePath, IRelativePathMapper relativePathMapper, ICache cache, DateTime? lastModifiedDateFromRequest)
+		private ActionResult Process(
+			string relativePath,
+			IRelativePathMapper relativePathMapper,
+			ICacheThingsWithModifiedDates<TextFileContents> cache,
+			DateTime? lastModifiedDateFromRequest)
 		{
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");

@@ -1,4 +1,5 @@
 ﻿using System;
+using CSSMinifier.Caching;
 
 namespace CSSMinifier.FileLoaders
 {
@@ -6,7 +7,7 @@ namespace CSSMinifier.FileLoaders
 	/// Represent a last-modified-date-marked text file we can store in cache
 	/// </summary>
 	[Serializable]
-	public class TextFileContents
+	public class TextFileContents : IKnowWhenIWasLastModified
 	{
 		public TextFileContents(string relativePath, DateTime lastModified, string content)
 		{
