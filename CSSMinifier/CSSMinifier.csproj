@@ -42,13 +42,10 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caching\CSSFileDiskCache.cs" />
     <Compile Include="Caching\ICacheThingsWithModifiedDates.cs" />
     <Compile Include="Caching\IKnowWhenIWasLastModified.cs" />
     <Compile Include="Caching\NullCache.cs" />
