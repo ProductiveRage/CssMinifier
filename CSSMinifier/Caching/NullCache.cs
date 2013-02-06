@@ -17,8 +17,8 @@ namespace CSSMinifier.Caching
 			{
 				if (string.IsNullOrWhiteSpace(cacheKey))
 					throw new ArgumentException("Null/blank cacheKey specified");
-				
-				return default(T);
+
+				return null;
 			}
 		}
 
