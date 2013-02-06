@@ -1,4 +1,5 @@
 ﻿using System;
+using CSSMinifier.Caching;
 using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
 
 namespace CSSMinifier.FileLoaders
@@ -13,8 +14,8 @@ namespace CSSMinifier.FileLoaders
 	{
 		private ITextFileLoader _contentLoader;
 		private ILastModifiedDateRetriever _lastModifiedDateRetriever;
-		private ICache _cache;
-		public CachingTextFileLoader(ITextFileLoader contentLoader, ILastModifiedDateRetriever lastModifiedDateRetriever, ICache cache)
+		private ICacheThingsWithModifiedDates<TextFileContents> _cache;
+		public CachingTextFileLoader(ITextFileLoader contentLoader, ILastModifiedDateRetriever lastModifiedDateRetriever, ICacheThingsWithModifiedDates<TextFileContents> cache)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
