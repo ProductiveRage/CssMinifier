@@ -45,6 +45,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caching\LayeredCache.cs" />
     <Compile Include="Caching\CSSFileDiskCache.cs" />
     <Compile Include="Caching\ICacheThingsWithModifiedDates.cs" />
     <Compile Include="Caching\IKnowWhenIWasLastModified.cs" />
