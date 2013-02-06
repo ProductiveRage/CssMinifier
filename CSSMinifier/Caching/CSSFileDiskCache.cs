@@ -88,42 +88,6 @@ namespace CSSMinifier.Caching
 		}
 
 		/// <summary>
-		/// This will do nothing if there is no entry for the specified cacheKey. It will throw an exception for null or blank cacheKey.
-		/// </summary>
-		public void Remove(string cacheKey)
-		{
-			if (string.IsNullOrWhiteSpace(cacheKey))
-				throw new ArgumentException("Null/blank cacheKey specified");
-
-			FileInfo file;
-			try
-			{
-				file = _cacheKeyTranslator(cacheKey);
-				if (file == null)
-					throw new Exception("CacheKeyTranslator returned null");
-			}
-			catch
-			{
-				_logger.LogIgnoringAnyError(LogLevel.Error, () => "TextFileContentsDiskCache.Remove: CacheKeyTranslator returned null");
-				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
-					throw;
-				return;
-			}
-
-			try
-			{
-				if (file.Exists)
-					file.Delete();
-			}
-			catch (Exception e)
-			{
-				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "TextFileContentsDiskCache.Remove: Error deleting file - " + e.Message, e);
-				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
-					throw;
-			}
-		}
-
-		/// <summary>
 		/// The caching mechanism (eg. cache duration) is determine by the ICache implementation. This will throw an exception for null or blank cacheKey or null value.
 		/// </summary>
 		public void Add(string cacheKey, TextFileContents value)
@@ -157,6 +121,42 @@ namespace CSSMinifier.Caching
 			catch (Exception e)
 			{
 				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "TextFileContentsDiskCache.Add: Error writing file - " + e.Message, e);
+				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+					throw;
+			}
+		}
+
+		/// <summary>
+		/// This will do nothing if there is no entry for the specified cacheKey. It will throw an exception for null or blank cacheKey.
+		/// </summary>
+		public void Remove(string cacheKey)
+		{
+			if (string.IsNullOrWhiteSpace(cacheKey))
+				throw new ArgumentException("Null/blank cacheKey specified");
+
+			FileInfo file;
+			try
+			{
+				file = _cacheKeyTranslator(cacheKey);
+				if (file == null)
+					throw new Exception("CacheKeyTranslator returned null");
+			}
+			catch
+			{
+				_logger.LogIgnoringAnyError(LogLevel.Error, () => "TextFileContentsDiskCache.Remove: CacheKeyTranslator returned null");
+				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+					throw;
+				return;
+			}
+
+			try
+			{
+				if (file.Exists)
+					file.Delete();
+			}
+			catch (Exception e)
+			{
+				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "TextFileContentsDiskCache.Remove: Error deleting file - " + e.Message, e);
 				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
 					throw;
 			}
