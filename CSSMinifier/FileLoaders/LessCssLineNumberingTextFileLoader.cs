@@ -173,13 +173,12 @@ namespace CSSMinifier.FileLoaders
 			private static char[] _declarationHeaderTerminators_MarkerInserting = new[]
 			{
 				'}', // Expect this to be the end of another style block, the current style declaration header has terminated
-				':', // Indicates we've entered a style block - a property is being set rather than nested selectors being defined
 				';'  // This could be the end of a LessCSS variable declaration, the current style declaration header has terminated
 			};
 			private static char[] _declarationHeaderTerminators_NonMarkerInserting = new[]
 			{
 				')', // Indicates that the declaration header is a LessCSS parameterised mixin or a media query, we don't want mark these
-				'@'  // Also indicates a media query (without parameters, otherwise the close bracket would have got it - eg. "@media print")
+				'@'  // Also indicates a media query (without parameters - eg. "@media print" - otherwise the close bracket would have got it)
 			};
 			private static char[] _declarationHeaderTerminators_Reset = new char[]
 			{
