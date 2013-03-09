@@ -85,7 +85,7 @@ namespace CSSMinifier.FileLoaders
 				catch (Exception e)
 				{
 					_logger.LogIgnoringAnyError(LogLevel.Error, () => "DiskCachingTextFileLoader.Load: Error loading content - " + e.Message);
-					if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+					if (_errorBehaviour == ErrorBehaviourOptions.RaiseException)
 						throw;
 					return null;
 				}
@@ -100,7 +100,7 @@ namespace CSSMinifier.FileLoaders
 			catch (Exception e)
 			{
 				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "DiskCachingTextFileLoader.Add: Load writing file - " + e.Message, e);
-				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+				if (_errorBehaviour == ErrorBehaviourOptions.RaiseException)
 					throw;
 			}
 			return content;
