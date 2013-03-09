@@ -1,4 +1,4 @@
-﻿namespace CSSMinifier.FileLoaders.Factories
+﻿namespace CSSMinifier.FileLoaders
 {
 	public enum ErrorBehaviourOptions
 	{

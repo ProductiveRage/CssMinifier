@@ -6,6 +6,7 @@ using System.Web;
 using System.Web.Mvc;
 using CSSMinifier.Caching;
 using CSSMinifier.FileLoaders;
+using CSSMinifier.FileLoaders.Factories;
 using CSSMinifier.FileLoaders.LastModifiedDateRetrievers;
 using CSSMinifier.Logging;
 using CSSMinifier.PathMapping;
@@ -61,13 +62,13 @@ namespace CSSMinifierDemo.Controllers
 		private ActionResult Process(
 			string relativePath,
 			IRelativePathMapper relativePathMapper,
-			ICacheThingsWithModifiedDates<TextFileContents> cache,
+			ICacheThingsWithModifiedDates<TextFileContents> memoryCache,
 			DateTime? lastModifiedDateFromRequest)
 		{
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
-			if (cache == null)
-				throw new ArgumentNullException("cache");
+			if (memoryCache == null)
+				throw new ArgumentNullException("memoryCache");
 			if (relativePathMapper == null)
 				throw new ArgumentNullException("relativePathMapper");
 
@@ -83,33 +84,33 @@ namespace CSSMinifierDemo.Controllers
 				return Content("", "text/css");
 			}
 
-			var importFlatteningCssLoader = new SameFolderImportFlatteningCssLoader(
-				new LessCssCommentRemovingTextFileLoader(
-					new SimpleTextFileContentLoader(relativePathMapper)
-				),
-				SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
-				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
-				SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore,
-				new NullLogger()
-			);
-			ITextFileLoader cssLoader;
-			if (relativePath.EndsWith(".less", StringComparison.InvariantCultureIgnoreCase))
-			{
-				cssLoader = new DotLessCssCssLoader(
-					importFlatteningCssLoader,
-					DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
-					DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndRaiseException,
-					new NullLogger()
-				);
-			}
-			else
-				cssLoader = new MinifyingCssLoader(importFlatteningCssLoader);
-			var modifiedDateCachingCssLoader = new CachingTextFileLoader(
+			// In the interests of compatability with this generic example project, we'll use the DefaultNonCachedLessCssLoaderFactory which will enable LESS compilation,
+			// import-flattening and minification but doesn't support the advanced features that the EnhancedNonCachedLessCssLoaderFactory enables such as psuedo-source-
+			// mapping, media-query-grouping and others (see comments in the EnhancedNonCachedLessCssLoaderFactory for more information)
+			var errorBehaviour = ErrorBehaviourOptions.LogAndContinue;
+			var logger = new NullLogger();
+			var cssLoader = (new DefaultNonCachedLessCssLoaderFactory(
+				relativePathMapper,
+				errorBehaviour,
+				logger
+			)).Get();
+			
+			// Layers of caching are added to persist the processed content in memory and on disk (last-modified-date checking is incorporated so that cache entries are
+			// expired if the source files have changed since the cached data was stored)
+			var diskCachingCssLoader = new DiskCachingTextFileLoader(
 				cssLoader,
+				relativePathRequested => new FileInfo(relativePathMapper.MapPath(relativePathRequested) + ".cache"),
+				errorBehaviour,
 				lastModifiedDateRetriever,
-				cache
+				logger
 			);
-			var content = modifiedDateCachingCssLoader.Load(relativePath);
+			var memoryAndDiskCachingCssLoader = new CachingTextFileLoader(
+				diskCachingCssLoader,
+				lastModifiedDateRetriever,
+				memoryCache
+			);
+
+			var content = memoryAndDiskCachingCssLoader.Load(relativePath);
 			if (content == null)
 				throw new Exception("Received null response from Css Loader - this should not happen");
 			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
