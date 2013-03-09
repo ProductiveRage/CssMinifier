@@ -32,24 +32,16 @@ namespace CSSMinifier.FileLoaders.Factories
 		/// </summary>
 		public ITextFileLoader Get()
 		{
-			var importFlatteningErrorBehaviour = (_errorBehaviour == ErrorBehaviourOptions.LogAndContinue)
-				? SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore
-				: SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException;
-			
-			var dotLessCompilerErrorBehaviour = (_errorBehaviour == ErrorBehaviourOptions.LogAndContinue)
-				? DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndContinue
-				: DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndRaiseException;
-			
 			return new DotLessCssCssLoader(
 				new SameFolderImportFlatteningCssLoader(
 					new SimpleTextFileContentLoader(_pathMapper),
 					SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
-					importFlatteningErrorBehaviour,
-					importFlatteningErrorBehaviour,
+					_errorBehaviour,
+					_errorBehaviour,
 					_logger
 				),
 				DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
-				dotLessCompilerErrorBehaviour,
+				_errorBehaviour,
 				_logger
 			);
 		}

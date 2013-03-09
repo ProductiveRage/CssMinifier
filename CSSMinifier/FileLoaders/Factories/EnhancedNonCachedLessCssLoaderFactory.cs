@@ -39,14 +39,6 @@ namespace CSSMinifier.FileLoaders.Factories
 		/// </summary>
 		public ITextFileLoader Get()
 		{
-			var importFlatteningErrorBehaviour = (_errorBehaviour == ErrorBehaviourOptions.LogAndContinue)
-				? SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.DisplayWarningAndIgnore
-				: SameFolderImportFlatteningCssLoader.ErrorBehaviourOptions.RaiseException;
-
-			var dotLessCompilerErrorBehaviour = (_errorBehaviour == ErrorBehaviourOptions.LogAndContinue)
-				? DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndContinue
-				: DotLessCssCssLoader.ReportedErrorBehaviourOptions.LogAndRaiseException;
-
 			var scopingBodyTagReplaceString = "REPLACEME";
 
 			var recordingMarkerGenerator = new LessCssLineNumberMarkerGenerator.RecordingMarkerGenerator(
@@ -68,12 +60,12 @@ namespace CSSMinifier.FileLoaders.Factories
 									recordingMarkerGenerator.MarkerGenerator
 								),
 								SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
-								importFlatteningErrorBehaviour,
-								importFlatteningErrorBehaviour,
+								_errorBehaviour,
+								_errorBehaviour,
 								_logger
 							),
 							DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
-							dotLessCompilerErrorBehaviour,
+							_errorBehaviour,
 							_logger
 						),
 						scopingBodyTagReplaceString + " ",
