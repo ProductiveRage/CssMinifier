@@ -46,12 +46,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Caching\LayeredCache.cs" />
-    <Compile Include="Caching\CSSFileDiskCache.cs" />
     <Compile Include="Caching\ICacheThingsWithModifiedDates.cs" />
     <Compile Include="Caching\IKnowWhenIWasLastModified.cs" />
     <Compile Include="Caching\NullCache.cs" />
     <Compile Include="FileLoaders\CachingTextFileLoader.cs" />
     <Compile Include="FileLoaders\ContentReplacingTextFileLoader.cs" />
+    <Compile Include="FileLoaders\DiskCachingTextFileLoader.cs" />
     <Compile Include="FileLoaders\Factories\EnhancedNonCachedLessCssLoaderFactory.cs" />
     <Compile Include="FileLoaders\Factories\DefaultNonCachedLessCssLoaderFactory.cs" />
     <Compile Include="FileLoaders\Factories\ErrorBehaviourOptions.cs" />

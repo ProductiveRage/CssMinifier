@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using CSSMinifier.Caching;
 using CSSMinifier.FileLoaders;
 using Xunit;
 
 namespace UnitTests
 {
-	public class CSSFileDiskCacheTests
+	public class DiskCachingTextFileLoaderTests
 	{
 		/// <summary>
 		/// This only tests the most basic case, edge cases will need additional tests
@@ -21,12 +20,12 @@ namespace UnitTests
 				".Woo{color:black}"
 			);
 
-			var contentRepresentation = CSSFileDiskCache.GetFileContentRepresentation(source);
+			var contentRepresentation = DiskCachingTextFileLoader.GetFileContentRepresentation(source);
 			
 			TextFileContents copy;
 			using (var reader = new StringReader(contentRepresentation))
 			{
-				copy = CSSFileDiskCache.GetFileContents(reader, source.LastModified);
+				copy = DiskCachingTextFileLoader.GetFileContents(reader);
 			}
 
 			Assert.Equal<TextFileContents>(
