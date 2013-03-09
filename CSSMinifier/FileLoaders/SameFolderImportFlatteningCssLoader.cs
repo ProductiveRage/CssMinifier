@@ -61,12 +61,6 @@ namespace CSSMinifier.FileLoaders
 			ContentIsUnprocessed
 		}
 
-		public enum ErrorBehaviourOptions
-		{
-			DisplayWarningAndIgnore,
-			RaiseException
-		}
-
 		/// <summary>
 		/// This will never return null, it will throw an exception for a null or empty relativePath - it is up to the particular implementation whether or not to throw
 		/// an exception for invalid / inaccessible filenames (if no exception is thrown, the issue should be logged). It is up the the implementation to handle mapping
@@ -110,13 +104,16 @@ namespace CSSMinifier.FileLoaders
 				var removeImport = false;
 				if (importDeclaration.RelativePath.Contains("\\") || importDeclaration.RelativePath.Contains("/"))
 				{
-					if (_unsupportedImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
+					if (_unsupportedImportBehaviour == ErrorBehaviourOptions.LogAndContinue)
 					{
 						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration.RelativePath + " (it has been removed)");
 						removeImport = true;
 					}
 					else
+					{
+						_logger.LogIgnoringAnyError(LogLevel.Warning, () => "Unsupported import specified: " + importDeclaration.RelativePath);
 						throw new UnsupportedStylesheetImportException("Imported stylesheets may not specify relative or absolute paths nor external urls: " + importDeclaration.RelativePath);
+					}
 				}
 
 				// If the original file has a relative path (eg. "styles/Test1.css") then we'll need to include that path in the import filename (eg. "Test2.css"
@@ -141,7 +138,7 @@ namespace CSSMinifier.FileLoaders
 				// waiting for a StackOverflowException to occur (or log a warning and remove the import, depending upon specified behaviour options)
 				if (importChainArray.Any(f => f.Equals(importDeclarationWithConsistentFilename.RelativePath, StringComparison.InvariantCultureIgnoreCase)))
 				{
-					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.DisplayWarningAndIgnore)
+					if (_circularReferenceImportBehaviour == ErrorBehaviourOptions.LogAndContinue)
 					{
 						_logger.LogIgnoringAnyError(
 							LogLevel.Warning,

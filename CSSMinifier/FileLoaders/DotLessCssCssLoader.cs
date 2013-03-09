@@ -10,19 +10,19 @@ namespace CSSMinifier.FileLoaders
 	{
 		private readonly ITextFileLoader _contentLoader;
 		private readonly LessCssMinificationTypeOptions _minificationType;
-		private readonly ReportedErrorBehaviourOptions _reportedErrorBehaviour;
+		private readonly ErrorBehaviourOptions _reportedErrorBehaviour;
 		private readonly ILogEvents _logger;
 		public DotLessCssCssLoader(
 			ITextFileLoader contentLoader,
 			LessCssMinificationTypeOptions minificationType,
-			ReportedErrorBehaviourOptions reportedErrorBehaviour,
+			ErrorBehaviourOptions reportedErrorBehaviour,
 			ILogEvents logger)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
 			if (!Enum.IsDefined(typeof(LessCssMinificationTypeOptions), minificationType))
 				throw new ArgumentOutOfRangeException("minificationType");
-			if (!Enum.IsDefined(typeof(ReportedErrorBehaviourOptions), reportedErrorBehaviour))
+			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), reportedErrorBehaviour))
 				throw new ArgumentOutOfRangeException("reportedErrorBehaviour");
 			if (logger == null)
 				throw new ArgumentNullException("logger");
@@ -37,12 +37,6 @@ namespace CSSMinifier.FileLoaders
 		{
 			DoNotMinify,
 			Minify
-		}
-
-		public enum ReportedErrorBehaviourOptions
-		{
-			LogAndContinue,
-			LogAndRaiseException
 		}
 
 		/// <summary>
@@ -70,12 +64,12 @@ namespace CSSMinifier.FileLoaders
 		private class DotLessCssPassThroughLogger : ILogger
 		{
 			private readonly ILogEvents _logger;
-			private readonly ReportedErrorBehaviourOptions _reportedErrorBehaviour;
-			public DotLessCssPassThroughLogger(ILogEvents logger, ReportedErrorBehaviourOptions reportedErrorBehaviour)
+			private readonly ErrorBehaviourOptions _reportedErrorBehaviour;
+			public DotLessCssPassThroughLogger(ILogEvents logger, ErrorBehaviourOptions reportedErrorBehaviour)
 			{
 				if (logger == null)
 					throw new ArgumentNullException("logger");
-				if (!Enum.IsDefined(typeof(ReportedErrorBehaviourOptions), reportedErrorBehaviour))
+				if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), reportedErrorBehaviour))
 					throw new ArgumentOutOfRangeException("reportedErrorBehaviour");
 
 				_logger = logger;
@@ -96,8 +90,8 @@ namespace CSSMinifier.FileLoaders
 					return;
 
 				_logger.Log(Logging.LogLevel.Error, DateTime.Now, () => message, null);
-				
-				if (_reportedErrorBehaviour == ReportedErrorBehaviourOptions.LogAndRaiseException)
+
+				if (_reportedErrorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
 					throw new Exception("dotLess parsing error: " + message);
 			}
 

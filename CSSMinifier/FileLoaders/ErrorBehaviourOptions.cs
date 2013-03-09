@@ -3,6 +3,6 @@
 	public enum ErrorBehaviourOptions
 	{
 		LogAndContinue,
-		RaiseException
+		LogAndRaiseException
 	}
 }
