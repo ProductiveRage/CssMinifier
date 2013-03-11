@@ -21,13 +21,15 @@ namespace CSSMinifier.FileLoaders
 		private readonly ITextFileLoader _contentLoader;
 		private readonly CacheFileLocationRetriever _cacheFileLocationRetriever;
 		private readonly ILastModifiedDateRetriever _lastModifiedDateRetriever;
+		private readonly InvalidContentBehaviourOptions _invalidContentBehaviour;
 		private readonly ErrorBehaviourOptions _errorBehaviour;
 		private readonly ILogEvents _logger;
 		public DiskCachingTextFileLoader(
 			ITextFileLoader contentLoader,
 			CacheFileLocationRetriever cacheFileLocationRetriever,
-			ErrorBehaviourOptions errorBehaviour,
 			ILastModifiedDateRetriever lastModifiedDateRetriever,
+			InvalidContentBehaviourOptions invalidContentBehaviour,
+			ErrorBehaviourOptions errorBehaviour,
 			ILogEvents logger)
 		{
 			if (contentLoader == null)
@@ -36,6 +38,8 @@ namespace CSSMinifier.FileLoaders
 				throw new ArgumentNullException("cacheFileLocationRetriever");
 			if (lastModifiedDateRetriever == null)
 				throw new ArgumentNullException("lastModifiedDateRetriever");
+			if (!Enum.IsDefined(typeof(InvalidContentBehaviourOptions), invalidContentBehaviour))
+				throw new ArgumentOutOfRangeException("invalidContentBehaviour");
 			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), errorBehaviour))
 				throw new ArgumentOutOfRangeException("errorBehaviour");
 			if (logger == null)
@@ -53,6 +57,12 @@ namespace CSSMinifier.FileLoaders
 		/// relativePath and must never return null.
 		/// </summary>
 		public delegate FileInfo CacheFileLocationRetriever(string relativePath);
+
+		public enum InvalidContentBehaviourOptions
+		{
+			Delete,
+			Ignore
+		}
 
 		/// <summary>
 		/// This will never return null, it will throw an exception for a null or empty relativePath - it is up to the particular implementation whether or not to throw
@@ -85,6 +95,23 @@ namespace CSSMinifier.FileLoaders
 				catch (Exception e)
 				{
 					_logger.LogIgnoringAnyError(LogLevel.Error, () => "DiskCachingTextFileLoader.Load: Error loading content - " + e.Message);
+					if ((e is InvalidCacheFileFormatException) && (_invalidContentBehaviour == InvalidContentBehaviourOptions.Delete))
+					{
+						try
+						{
+							cacheFile.Delete();
+						}
+						catch (Exception invalidFileContentDeleteException)
+						{
+							_logger.LogIgnoringAnyError(
+								LogLevel.Warning,
+								() => "DiskCachingTextFileLoader.Add: Unable to delete cache file with invalid contents - " + invalidFileContentDeleteException.Message,
+								invalidFileContentDeleteException
+							);
+							if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+								throw;
+						}
+					}
 					if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
 						throw;
 					return null;
@@ -99,14 +126,19 @@ namespace CSSMinifier.FileLoaders
 			}
 			catch (Exception e)
 			{
-				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "DiskCachingTextFileLoader.Add: Load writing file - " + e.Message, e);
+				_logger.LogIgnoringAnyError(LogLevel.Warning, () => "DiskCachingTextFileLoader.Add: Error writing file - " + e.Message, e);
 				if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
 					throw;
 			}
 			return content;
 		}
 
-		private const string LastModifiedDateFormat = "yyyy-MM-dd HH:mm:ss.fff";
+		/// <summary>
+		/// Capture the maximum precision available for millisecond values to ensure that the last-modified-date check in Load succeeds (if insufficient precision
+		/// is recorded in the MetaData stored in the file then the last-modified-date of the source file(s) will almost always be later than that recorded for
+		/// the cached data)
+		/// </summary>
+		private const string LastModifiedDateFormat = "yyyy-MM-dd HH:mm:ss.fffffff";
 
 		/// <summary>
 		/// This is only exposed for unit testing. This will throw an exception if unable to generate the content, it will never return null or a blank string.
