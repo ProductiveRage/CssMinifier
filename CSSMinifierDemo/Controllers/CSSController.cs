@@ -75,7 +75,7 @@ namespace CSSMinifierDemo.Controllers
 			// Using the SingleFolderLastModifiedDateRetriever means that we can determine whether cached content (either in the ASP.Net cache or in the browser cache)
 			// is up to date without having to perform the complete import flattening process. It may lead to some unnecessary work if an unrelated file in the folder
 			// is updated but for the most common cases it should be an efficient approach.
-			var lastModifiedDateRetriever = new SingleFolderLastModifiedDateRetriever(relativePathMapper);
+			var lastModifiedDateRetriever = new SingleFolderLastModifiedDateRetriever(relativePathMapper, new[] { "css", "less" });
 			var lastModifiedDate = lastModifiedDateRetriever.GetLastModifiedDate(relativePath);
 			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
 			{
@@ -100,8 +100,9 @@ namespace CSSMinifierDemo.Controllers
 			var diskCachingCssLoader = new DiskCachingTextFileLoader(
 				cssLoader,
 				relativePathRequested => new FileInfo(relativePathMapper.MapPath(relativePathRequested) + ".cache"),
-				errorBehaviour,
 				lastModifiedDateRetriever,
+				DiskCachingTextFileLoader.InvalidContentBehaviourOptions.Delete,
+				errorBehaviour,
 				logger
 			);
 			var memoryAndDiskCachingCssLoader = new CachingTextFileLoader(
