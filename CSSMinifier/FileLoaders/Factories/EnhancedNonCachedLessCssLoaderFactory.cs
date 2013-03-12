@@ -131,13 +131,13 @@ namespace CSSMinifier.FileLoaders.Factories
 
 			public class RecordingMarkerGenerator
 			{
-				private readonly List<string> _insertedMarkers;
+				private readonly HashSet<string> _insertedMarkers;
 				public RecordingMarkerGenerator(LessCssLineNumberingTextFileLoader.MarkerGenerator markerGenerator)
 				{
 					if (markerGenerator == null)
 						throw new ArgumentNullException("markerGenerator");
 
-					_insertedMarkers = new List<string>();
+					_insertedMarkers = new HashSet<string>();
 					MarkerGenerator = (relativePath, lineNumber) =>
 					{
 						var marker = markerGenerator(relativePath, lineNumber);
@@ -166,7 +166,7 @@ namespace CSSMinifier.FileLoaders.Factories
 					{
 						lock (_insertedMarkers)
 						{
-							return _insertedMarkers.AsReadOnly();
+							return _insertedMarkers.ToArray();
 						}
 					}
 				}
