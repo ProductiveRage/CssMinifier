@@ -4,6 +4,24 @@
         <name>CSSParser</name>
     </assembly>
     <members>
+        <member name="T:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters">
+            <summary>
+            This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances
+            </summary>
+        </member>
+        <member name="M:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters.GetStrings(CSSParser.StringNavigators.IWalkThroughStrings,CSSParser.ContentProcessors.CharacterProcessors.IProcessCharacters)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for null contentWalker or contentProcessor
+            references or it the processing failed.
+            </summary>
+        </member>
+        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings.TryToGetCharacterString(System.Int32)">
+            <summary>
+            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
+            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
+            content to deliver. This will never return null.
+            </summary>
+        </member>
         <member name="P:CSSParser.StringNavigators.IWalkThroughStrings.CurrentCharacter">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
@@ -14,24 +32,52 @@
             This will never return null
             </summary>
         </member>
-        <member name="P:CSSParser.StringNavigators.StringNavigator.CSSParser#StringNavigators#IWalkThroughStrings#CurrentCharacter">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
-            </summary>
-        </member>
-        <member name="P:CSSParser.StringNavigators.StringNavigator.Next">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
-            </summary>
-        </member>
         <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.IGenerateCharacterProcessors.Get``1(System.Object[])">
             <summary>
             This will never return null, it will throw an exception if unable to satisfy the request
             </summary>
         </member>
+        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.Get``1(System.Object[])">
+            <summary>
+            This will never return null, it will throw an exception if unable to satisfy the request
+            </summary>
+        </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Type">
+            <summary>
+            This will never be null
+            </summary>
+        </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Args">
+            <summary>
+            This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
+            </summary>
+        </member>
         <member name="F:CSSParser.ContentProcessors.CharacterCategorisationOptions.StylePropertyColon">
             <summary>
             This is the colon between a Style Property and Value (not any colons that may exist in a media query, for example)
+            </summary>
+        </member>
+        <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.TryToGetCharacterString(System.Int32)">
+            <summary>
+            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
+            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
+            content to deliver. This will never return null.
+            </summary>
+        </member>
+        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.CurrentCharacter">
+            <summary>
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.Next">
+            <summary>
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.SelectorOrStyleSegment.IsNextWordOneOfThePseudoClasses(CSSParser.StringNavigators.IWalkThroughStrings)">
+            <summary>
+            This will try to determine whether the next word from the given point in the string navigator is a recognised pseudo class. Any whitespace at
+            the current position will be moved over and the content, if any, taken from there.
             </summary>
         </member>
         <member name="P:CSSParser.ContentProcessors.StringProcessors.CategorisedCharacterString.Value">
@@ -42,6 +88,23 @@
         <member name="P:CSSParser.ContentProcessors.StringProcessors.CategorisedCharacterString.IndexInSource">
             <summary>
             This is the location of the start of the string in the source data
+            </summary>
+        </member>
+        <member name="M:CSSParser.StringNavigators.StringNavigator.TryToGetCharacterString(System.Int32)">
+            <summary>
+            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
+            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
+            content to deliver. This will never return null.
+            </summary>
+        </member>
+        <member name="P:CSSParser.StringNavigators.StringNavigator.CSSParser#StringNavigators#IWalkThroughStrings#CurrentCharacter">
+            <summary>
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="P:CSSParser.StringNavigators.StringNavigator.Next">
+            <summary>
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
         <member name="M:CSSParser.Parser.ParseCSS(System.String)">
@@ -62,17 +125,6 @@
             that aren't separated by whitespace will be combined into one string containing those multiple braces).
             </summary>
         </member>
-        <member name="T:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters">
-            <summary>
-            This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances
-            </summary>
-        </member>
-        <member name="M:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters.GetStrings(CSSParser.StringNavigators.IWalkThroughStrings,CSSParser.ContentProcessors.CharacterProcessors.IProcessCharacters)">
-            <summary>
-            This will never return null nor a set containing any null references. It will throw an exception for null contentWalker or contentProcessor
-            references or it the processing failed.
-            </summary>
-        </member>
         <member name="T:CSSParser.ContentProcessors.CharacterProcessors.MediaQuerySegment">
             <summary>
             Once we're in a media query section, we don't leave it until we hit the open brace of the section it refers to (so don't, for example, allow any colons
@@ -84,40 +136,9 @@
             This will never return null, it will throw an exception if unable to satisfy the request
             </summary>
         </member>
-        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings_Extensions.TryToGetCharacterString(CSSParser.StringNavigators.IWalkThroughStrings,System.Int32)">
-            <summary>
-            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
-            characters available, then null will be returned. This will never return an empty string as requiredNumberOfCharacters must be a positive value.
-            </summary>
-        </member>
-        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.Get``1(System.Object[])">
-            <summary>
-            This will never return null, it will throw an exception if unable to satisfy the request
-            </summary>
-        </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Type">
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.ISegment.Content">
             <summary>
             This will never be null
-            </summary>
-        </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Args">
-            <summary>
-            This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
-            </summary>
-        </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
-            <summary>
-            This will never be null
-            </summary>
-        </member>
-        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.CurrentCharacter">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
-            </summary>
-        </member>
-        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.Next">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
         <member name="T:CSSParser.ContentProcessors.StringProcessors.ProcessedCharactersGrouper">
@@ -136,7 +157,7 @@
             references or it the processing failed.
             </summary>
         </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.ISegment.Content">
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
             <summary>
             This will never be null
             </summary>

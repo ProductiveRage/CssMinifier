@@ -207,6 +207,13 @@ namespace CSSMinifier.FileLoaders
 			// Note: While "#" and "." may be used as part of the inserted marker, the child selector ">" may not and so we'll need to break on
 			// any whitespace AND the ">" symbol (this is protected against by the HtmlId constructor validation)
 
+			// Ensure that any whitespace around pseudo class colons to ensure that they don't appear as an separate selector when the string is
+			// broken up for the loop below
+			while (cssSelector.Contains(": "))
+				cssSelector = cssSelector.Replace(": ", ":");
+			while (cssSelector.Contains(" :"))
+				cssSelector = cssSelector.Replace(" :", ":");
+
 			var tidiedSelectors = new List<string>();
 			foreach (var selector in cssSelector.Split(',').Select(s => s.Trim()).Where(s => s != ""))
 			{
@@ -224,26 +231,35 @@ namespace CSSMinifier.FileLoaders
 					continue;
 				}
 
+				// The final segment is the only place in which an injected id may appear, if one appears elsewhere in the selector then the entire
+				// selector should be removed from the output. If the final segment IS an injected id, then the entire selector should be replaced
+				// with only that id (since the rest of the selector is irrelevant and effectively just noise around the injected id - eg. instead
+				// "div.Wrapper div.Header #Test1.css_15" we should include on "#Test1.css_15").
 				var shouldSelectorBeMaintained = true;
+				string contentToReplaceSelectorWith = null;
 				for (var index = 0; index < selectorSegments.Length; index++)
 				{
-					// The final segment (for cases where there are more than one segment) may be an injected id but none of the others may be (if
-					// it's not an injected id, that doesn't matter - we allow it either way). If there is only one segment then this condition
-					// will never be entered (see above).
-					if (index == (selectorSegments.Length - 1))
-						continue;
-
-					var selectorSegment = selectorSegments[index];
-					if (insertedIds.Any(id => selectorSegment == ("#" + id.Value)))
+					var selectorSegmentWithoutAnyPseudoClass = selectorSegments[index].Split(':')[0];
+					if (insertedIds.Any(id => selectorSegmentWithoutAnyPseudoClass == ("#" + id.Value)))
 					{
-						shouldSelectorBeMaintained = false;
-						break;
+						if (index == (selectorSegments.Length - 1))
+							contentToReplaceSelectorWith = selectorSegmentWithoutAnyPseudoClass;
+						else
+						{
+							shouldSelectorBeMaintained = false;
+							break;
+						}
 					}
 				}
-				if (shouldSelectorBeMaintained)
-					tidiedSelectors.Add(selector);
+				if (!shouldSelectorBeMaintained)
+					continue;
+
+				tidiedSelectors.Add(contentToReplaceSelectorWith ?? selector);
 			}
-			return string.Join(",", tidiedSelectors);
+			
+			// Exclude any duplicate selectors (most common where injected ids appear in multiple selectors which are then reduced down by the
+			// above loop to be the injected id only)
+			return string.Join(",", tidiedSelectors.Distinct());
 		}
 
 		/// <summary>
@@ -310,6 +326,11 @@ namespace CSSMinifier.FileLoaders
 			/// This will never be null or blank
 			/// </summary>
 			public string Value { get; private set; }
+
+			public override string ToString()
+			{
+				return base.ToString() + ":" + Value;
+			}
 		}
 	}
 }
