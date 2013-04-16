@@ -207,13 +207,6 @@ namespace CSSMinifier.FileLoaders
 			// Note: While "#" and "." may be used as part of the inserted marker, the child selector ">" may not and so we'll need to break on
 			// any whitespace AND the ">" symbol (this is protected against by the HtmlId constructor validation)
 
-			// Ensure that any whitespace around pseudo class colons to ensure that they don't appear as an separate selector when the string is
-			// broken up for the loop below
-			while (cssSelector.Contains(": "))
-				cssSelector = cssSelector.Replace(": ", ":");
-			while (cssSelector.Contains(" :"))
-				cssSelector = cssSelector.Replace(" :", ":");
-
 			var tidiedSelectors = new List<string>();
 			foreach (var selector in cssSelector.Split(',').Select(s => s.Trim()).Where(s => s != ""))
 			{

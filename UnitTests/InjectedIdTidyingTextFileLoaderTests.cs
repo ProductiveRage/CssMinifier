@@ -33,6 +33,32 @@ namespace UnitTests
 		}
 
 		/// <summary>
+		/// This test was added to address a bug that was introduced into the InjectedIdTidyingTextFileLoader where whitespace around pseudo class colons was being
+		/// removed ("h2 a:hover" is NOT the same as "h2 a :hover")
+		/// </summary>
+		[Fact]
+		public void NonNestedMarkersShouldNotBeRemovedIncludingSignificantWhitespaceAroundPseudoClassColons()
+		{
+			var filename = "test.css";
+			var insertedMarkers = new[]
+			{
+				"#test.css_1,"
+			};
+			var content = "#test.css_1,.Woo :hover{color: blue;}";
+			var tidiedContentLoader = new InjectedIdTidyingTextFileLoader(
+				new FixedListCssContentLoader(
+					new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content)
+				),
+				() => insertedMarkers
+			);
+
+			Assert.Equal(
+				content, // We're expecting that the content not be altered
+				tidiedContentLoader.Load(filename).Content
+			);
+		}
+
+		/// <summary>
 		/// eg.
 		///   #test.css_1, .Woo { 
 		///     #test.css_2, h2 { font-weight: bold; }
@@ -40,8 +66,8 @@ namespace UnitTests
 		/// is translated into
 		///   #test.css_1 #test.css_2, #test.css_1 h2, .Woo #test.css_2, .Woo h2 { font-weight: bold; }
 		/// but we want it to be
-		///   .Woo #test.css_2, .Woo h2 { font-weight: bold; }
-		/// since we want to keep the real selector (".Woo h2") but also keep the most specific marker (".Woo #test.css_2")
+		///   #test.css_2, .Woo h2 { font-weight: bold; }
+		/// since we want to keep the real selector (".Woo h2") and also keep the most specific inserted marker ("#test.css_2")
 		/// </summary>
 		[Fact]
 		public void OnceNestedSelectorShouldLoseTopLevelMarker()
@@ -61,7 +87,7 @@ namespace UnitTests
 			);
 
 			Assert.Equal(
-				".Woo #test.css_2,.Woo h2{font-weight:bold;}",
+				"#test.css_2,.Woo h2{font-weight:bold;}",
 				tidiedContentLoader.Load(filename).Content
 			);
 		}
@@ -88,7 +114,7 @@ namespace UnitTests
 			);
 
 			Assert.Equal(
-				".Woo #test.css_2,.Woo>h2{font-weight:bold;}",
+				"#test.css_2,.Woo>h2{font-weight:bold;}",
 				tidiedContentLoader.Load(filename).Content
 			);
 		}
