@@ -214,6 +214,7 @@ namespace CSSMinifier.FileLoaders
 		//  @import "test.css"
 		//  @import 'test.css'
 		// There may be additional spaces around punctuation any may optionally have a media type/query specified after the filename.
+		// 2013-04-25 DWR: According to http://www.w3.org/TR/css3-syntax/#at-rules, it's invalid for @import rules not to be semicolon-terminated.
 		private static readonly Regex ImportDeclarationsMatcher = new Regex(
 			String.Join("|", new[]
 			{
