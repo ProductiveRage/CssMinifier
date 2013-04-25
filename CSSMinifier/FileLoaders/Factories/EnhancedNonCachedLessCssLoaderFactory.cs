@@ -17,22 +17,24 @@ namespace CSSMinifier.FileLoaders.Factories
 	/// </summary>
 	public class EnhancedNonCachedLessCssLoaderFactory : IGenerateCssLoaders
 	{
-		private readonly IRelativePathMapper _pathMapper;
+		private readonly ITextFileLoader _contentLoader;
 		private readonly ErrorBehaviourOptions _errorBehaviour;
 		private readonly ILogEvents _logger;
-		public EnhancedNonCachedLessCssLoaderFactory(IRelativePathMapper pathMapper, ErrorBehaviourOptions errorBehaviour, ILogEvents logger)
+		public EnhancedNonCachedLessCssLoaderFactory(ITextFileLoader contentLoader, ErrorBehaviourOptions errorBehaviour, ILogEvents logger)
 		{
-			if (pathMapper == null)
-				throw new ArgumentNullException("pathMapper");
+			if (contentLoader == null)
+				throw new ArgumentNullException("contentLoader");
 			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), errorBehaviour))
 				throw new ArgumentOutOfRangeException("lineNumberInjectionBehaviour");
 			if (logger == null)
 				throw new ArgumentNullException("logger");
 
-			_pathMapper = pathMapper;
+			_contentLoader = contentLoader;
 			_errorBehaviour = errorBehaviour;
 			_logger = logger;
 		}
+		public EnhancedNonCachedLessCssLoaderFactory(IRelativePathMapper pathMapper, ErrorBehaviourOptions errorBehaviour, ILogEvents logger)
+			: this(new SimpleTextFileContentLoader(pathMapper), errorBehaviour, logger) { }
 
 		/// <summary>
 		/// This will never return null, it will raise an exception if unable to satisfy the request
@@ -53,7 +55,7 @@ namespace CSSMinifier.FileLoaders.Factories
 								new LessCssLineNumberingTextFileLoader(
 									new LessCssCommentRemovingTextFileLoader(
 										new LessCssOpeningBodyTagRenamer(
-											new SimpleTextFileContentLoader(_pathMapper),
+											_contentLoader,
 											scopingBodyTagReplaceString
 										)
 									),
