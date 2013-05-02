@@ -48,7 +48,7 @@
     <Compile Include="InjectedIdTidyingTextFileLoaderTests.cs" />
     <Compile Include="LessCssCommentRemovingTextFileLoader.cs.cs" />
     <Compile Include="LessCssLineNumberingTextFileLoaderTests.cs" />
-    <Compile Include="LessCssOpeningBodyTagRenamerTests.cs" />
+    <Compile Include="LessCssOpeningHtmlTagRenamerTests.cs" />
     <Compile Include="MediaQueryGroupingCssLoaderTests.cs" />
     <Compile Include="MinifyingCssLoaderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
