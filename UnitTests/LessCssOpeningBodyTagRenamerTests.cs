@@ -15,7 +15,7 @@ namespace UnitTests
 		{
 			var filename = "Test.css";
 			var content = "body { }";
-			var textFileLoader = new LessCssOpeningBodyTagRenamer(
+			var textFileLoader = new LessCssOpeningHtmlTagRenamer(
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 1, 31, 21, 55, 0), content)
 				),
@@ -33,7 +33,7 @@ namespace UnitTests
 		{
 			var filename = "Test.css";
 			var content = "body { h2 { font-weight: bold; } }";
-			var textFileLoader = new LessCssOpeningBodyTagRenamer(
+			var textFileLoader = new LessCssOpeningHtmlTagRenamer(
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 1, 31, 21, 55, 0), content)
 				),
@@ -59,7 +59,7 @@ namespace UnitTests
 		{
 			var filename = "Test.css";
 			var content = "body { h2 { font-weight: bold; } }\n";
-			var textFileLoader = new LessCssOpeningBodyTagRenamer(
+			var textFileLoader = new LessCssOpeningHtmlTagRenamer(
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 1, 31, 21, 55, 0), content)
 				),

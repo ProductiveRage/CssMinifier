@@ -54,7 +54,7 @@ namespace CSSMinifier.FileLoaders.Factories
 							new SameFolderImportFlatteningCssLoader(
 								new LessCssLineNumberingTextFileLoader(
 									new LessCssCommentRemovingTextFileLoader(
-										new LessCssOpeningBodyTagRenamer(
+										new LessCssOpeningHtmlTagRenamer(
 											_contentLoader,
 											scopingBodyTagReplaceString
 										)

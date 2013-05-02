@@ -8,31 +8,31 @@ using CSSParser.ContentProcessors.StringProcessors;
 namespace CSSMinifier.FileLoaders
 {
 	/// <summary>
-	/// If a LESS stylesheet wraps all of its styles in a body tag (eg. "body { /* All content here */ }") to restrict the scope of any LESS values and mixins, then it
-	/// may be desirable to remove the body tags that will consequently prepend all of the generated CSS selectors. This can be achieved by wrapping the ITextFileLoader
-	/// instances that load individual files in a LessCssOpeningBodyTagRenamer and replacing the body tag with a particular string that can be removed by a
+	/// If a LESS stylesheet wraps all of its styles in a html tag (eg. "html { /* All content here */ }") to restrict the scope of any LESS values and mixins, then it
+	/// may be desirable to remove the html tags that will consequently prepend all of the generated CSS selectors. This can be achieved by wrapping the ITextFileLoader
+	/// instances that load individual files in a LessCssOpeningHtmlTagRenamer and replacing the html tag with a particular string that can be removed by a
 	/// ContentReplacingTextFileLoader when the processing and content minification is otherwise complete.
 	/// 
-	/// Note: The string that is inserted in place of the body tag should appear to be a valid selector otherwise the LESS processor may be unable to process the content.
+	/// Note: The string that is inserted in place of the html tag should appear to be a valid selector otherwise the LESS processor may be unable to process the content.
 	/// 
 	/// Note: If this is to be used in conjunction with a LessCssLineNumberingTextFileLoader, then ensure that this appears first in the file loader chain otherwise a
-	/// marker may be injected at the start of the content, preventing the opening "body" tag from being detected. Also note that this will not not work with files that
-	/// have imports before the "body" tag, but this is acceptable for the intended use cases (where body-wrapped content is for standalone files, they wouldn't be expected
+	/// marker may be injected at the start of the content, preventing the opening "html" tag from being detected. Also note that this will not not work with files that
+	/// have imports before the "html" tag, but this is acceptable for the intended use cases (where html-wrapped content is for standalone files, they wouldn't be expected
 	/// to import anthing).
 	/// </summary>
-	public class LessCssOpeningBodyTagRenamer : ITextFileLoader
+	public class LessCssOpeningHtmlTagRenamer : ITextFileLoader
 	{
 		private readonly ITextFileLoader _fileLoader;
-		private readonly string _replaceOpeningBodyTagWith;
-		public LessCssOpeningBodyTagRenamer(ITextFileLoader fileLoader, string replaceOpeningBodyTagWith)
+		private readonly string _replaceOpeningHtmlTagWith;
+		public LessCssOpeningHtmlTagRenamer(ITextFileLoader fileLoader, string replaceOpeningHtmlTagWith)
 		{
 			if (fileLoader == null)
 				throw new ArgumentNullException("fileLoader");
-			if (string.IsNullOrWhiteSpace(replaceOpeningBodyTagWith))
-				throw new ArgumentException("Null/blank replaceOpeningBodyTagWith specified");
+			if (string.IsNullOrWhiteSpace(replaceOpeningHtmlTagWith))
+				throw new ArgumentException("Null/blank replaceOpeningHtmlTagWith specified");
 
 			_fileLoader = fileLoader;
-			_replaceOpeningBodyTagWith = replaceOpeningBodyTagWith;
+			_replaceOpeningHtmlTagWith = replaceOpeningHtmlTagWith;
 		}
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace CSSMinifier.FileLoaders
 				throw new ArgumentNullException("content");
 
 			var processedSegments = new List<CategorisedCharacterString>();
-			var searchProgress = ScopeRestrictingBodyTagSearchProgressOptions.LookingForBodyTag;
+			var searchProgress = ScopeRestrictingHtmlTagSearchProgressOptions.LookingForHtmlTag;
 			foreach (var segment in Parser.ParseLESS(content))
 			{
 				// No examination of Comment or Whitespace segments is required, just add them to the processedSegments list so that they don't
@@ -76,47 +76,47 @@ namespace CSSMinifier.FileLoaders
 
 				switch (searchProgress)
 				{
-					// If we're yet to locate the opening body tag, and this isn't Comment or Whitespace content, then this segment has to be the
-					// opening body tag or we'll have to return the content unprocessed (as it appears to not be body-scoped LESS content)
-					case ScopeRestrictingBodyTagSearchProgressOptions.LookingForBodyTag:
-						if ((segment.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty) && (segment.Value == "body"))
+					// If we're yet to locate the opening html tag, and this isn't Comment or Whitespace content, then this segment has to be the
+					// opening html tag or we'll have to return the content unprocessed (as it appears to not be html-scoped LESS content)
+					case ScopeRestrictingHtmlTagSearchProgressOptions.LookingForHtmlTag:
+						if ((segment.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty) && (segment.Value == "html"))
 						{
 							processedSegments.Add(segment);
-							searchProgress = ScopeRestrictingBodyTagSearchProgressOptions.LookingForBodyTagOpeningBrace;
+							searchProgress = ScopeRestrictingHtmlTagSearchProgressOptions.LookingForHtmlTagOpeningBrace;
 							continue;
 						}
 						return content;
 
-					// If we HAVE located the opening body tag, the next non-Comment-or-Whitespace content must be an opening brace, otherwise
-					// we'll have to return the content unprocessed (as it appears to not be body-scoped LESS content)
-					case ScopeRestrictingBodyTagSearchProgressOptions.LookingForBodyTagOpeningBrace:
+					// If we HAVE located the opening html tag, the next non-Comment-or-Whitespace content must be an opening brace, otherwise
+					// we'll have to return the content unprocessed (as it appears to not be html-scoped LESS content)
+					case ScopeRestrictingHtmlTagSearchProgressOptions.LookingForHtmlTagOpeningBrace:
 						if (segment.CharacterCategorisation == CharacterCategorisationOptions.OpenBrace)
 						{
 							processedSegments.Add(segment);
-							searchProgress = ScopeRestrictingBodyTagSearchProgressOptions.LookingForFirstSelectorOrStyle;
+							searchProgress = ScopeRestrictingHtmlTagSearchProgressOptions.LookingForFirstSelectorOrStyle;
 							continue;
 						}
 						return content;
 
-					// If we've located the opening body tag's opening brace, we need to try to find the first selector-or-style-property and
+					// If we've located the opening html tag's opening brace, we need to try to find the first selector-or-style-property and
 					// try to confirm that it's a nested selector and not a style property
-					case ScopeRestrictingBodyTagSearchProgressOptions.LookingForFirstSelectorOrStyle:
+					case ScopeRestrictingHtmlTagSearchProgressOptions.LookingForFirstSelectorOrStyle:
 						if (segment.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
 						{
 							processedSegments.Add(segment);
-							searchProgress = ScopeRestrictingBodyTagSearchProgressOptions.LookingToConfirmItsNotStyleProperty;
+							searchProgress = ScopeRestrictingHtmlTagSearchProgressOptions.LookingToConfirmItsNotStyleProperty;
 							continue;
 						}
 						return content;
 
-					// Once we've located selector-or-style-property content within the the body block, we'll know it was a style property if
+					// Once we've located selector-or-style-property content within the the html block, we'll know it was a style property if
 					// it's followed by a colon rather than another selector-or-style-property or an opening brace (if it's a style property
-					// then we've not identified a scope-restricting body tag and so return the content unprocessed)
-					case ScopeRestrictingBodyTagSearchProgressOptions.LookingToConfirmItsNotStyleProperty:
+					// then we've not identified a scope-restricting html tag and so return the content unprocessed)
+					case ScopeRestrictingHtmlTagSearchProgressOptions.LookingToConfirmItsNotStyleProperty:
 						if (segment.CharacterCategorisation != CharacterCategorisationOptions.StylePropertyColon)
 						{
 							processedSegments.Add(segment);
-							searchProgress = ScopeRestrictingBodyTagSearchProgressOptions.SuccessfullyIdentifiedBodyTagToReplace;
+							searchProgress = ScopeRestrictingHtmlTagSearchProgressOptions.SuccessfullyIdentifiedHtmlTagToReplace;
 							break;
 						}
 						return content;
@@ -124,19 +124,19 @@ namespace CSSMinifier.FileLoaders
 					default:
 						throw new Exception("Encountered unexpected searchProgress value: " + searchProgress.ToString());
 				}
-				if (searchProgress == ScopeRestrictingBodyTagSearchProgressOptions.SuccessfullyIdentifiedBodyTagToReplace)
+				if (searchProgress == ScopeRestrictingHtmlTagSearchProgressOptions.SuccessfullyIdentifiedHtmlTagToReplace)
 					break;
 			}
-			if (searchProgress != ScopeRestrictingBodyTagSearchProgressOptions.SuccessfullyIdentifiedBodyTagToReplace)
+			if (searchProgress != ScopeRestrictingHtmlTagSearchProgressOptions.SuccessfullyIdentifiedHtmlTagToReplace)
 				return content;
 
-			// If we HAVE identified an opening body tag then we'll want to rewrite the content
-			// - Write out the segments we had to process, renaming the body tag
+			// If we HAVE identified an opening html tag then we'll want to rewrite the content
+			// - Write out the segments we had to process, renaming the html tag
 			var rewrittenContentBuilder = new StringBuilder();
 			foreach (var segment in processedSegments)
 			{
-				if ((segment.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty) && (segment.Value == "body"))
-					rewrittenContentBuilder.Append(_replaceOpeningBodyTagWith);
+				if ((segment.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty) && (segment.Value == "html"))
+					rewrittenContentBuilder.Append(_replaceOpeningHtmlTagWith);
 				else
 					rewrittenContentBuilder.Append(segment.Value);
 			}
@@ -148,13 +148,13 @@ namespace CSSMinifier.FileLoaders
 			return rewrittenContentBuilder.ToString();
 		}
 
-		private enum ScopeRestrictingBodyTagSearchProgressOptions
+		private enum ScopeRestrictingHtmlTagSearchProgressOptions
 		{
-			LookingForBodyTag,
-			LookingForBodyTagOpeningBrace,
+			LookingForHtmlTag,
+			LookingForHtmlTagOpeningBrace,
 			LookingForFirstSelectorOrStyle,
 			LookingToConfirmItsNotStyleProperty,
-			SuccessfullyIdentifiedBodyTagToReplace
+			SuccessfullyIdentifiedHtmlTagToReplace
 		}
 	}
 }
