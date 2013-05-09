@@ -80,6 +80,11 @@
             the current position will be moved over and the content, if any, taken from there.
             </summary>
         </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.SelectorOrStyleSegment.CharacterCategorisationBehaviourOverride.CharacterProcessorToReturnTo">
+            <summary>
+            This will never be null
+            </summary>
+        </member>
         <member name="P:CSSParser.ContentProcessors.StringProcessors.CategorisedCharacterString.Value">
             <summary>
             This will never be null or an empty string
@@ -105,6 +110,15 @@
         <member name="P:CSSParser.StringNavigators.StringNavigator.Next">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="T:CSSParser.Parser">
+            <summary>
+            The parsing performed by these methods is intended to be as cheap as possible but in exchange it performs only simplistic parsing of the
+            content (it doesn't differentiate between selectors - eg. "div.Header h2.Name, div.Footer" and style property names - eg. "color" - for
+            example). The quality of the data may be improved by passing the returned CategorisedCharacterString set through the
+            LessCssHierarchicalParser, this WILL differentiate between selectors and style property names and will represent nested styles (for
+            LESS CSS content) and styles nested within media queries. It requires an additional processing step, though.
             </summary>
         </member>
         <member name="M:CSSParser.Parser.ParseCSS(System.String)">
@@ -141,6 +155,13 @@
             This will never be null
             </summary>
         </member>
+        <member name="T:CSSParser.ContentProcessors.CharacterProcessors.BracketedSelectorSegment">
+            <summary>
+            This will likely be an attribute selector (eg. the "[type='text']" of "input[type='text']") or the argument list of a LESS mixin. The
+            entire content will be identified as CharacterCategorisationOptions.SelectorOrStyleProperty, such as whitespace, quoted sections (but
+            not comments - they will still be identified as acterCategorisationOptions.Comment).
+            </summary>
+        </member>
         <member name="T:CSSParser.ContentProcessors.StringProcessors.ProcessedCharactersGrouper">
             <summary>
             This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances. This implementation will only parse the
@@ -160,6 +181,12 @@
         <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
             <summary>
             This will never be null
+            </summary>
+        </member>
+        <member name="T:CSSParser.ContentProcessors.CharacterProcessors.QuotedSegment">
+            <summary>
+            This may be a quoted section of a property value or of an attribute selector (this will be determined by the characterCategorisation
+            passed to the constructor)
             </summary>
         </member>
     </members>
