@@ -48,6 +48,7 @@ namespace CSSMinifier.FileLoaders
 			_contentLoader = contentLoader;
 			_cacheFileLocationRetriever = cacheFileLocationRetriever;
 			_lastModifiedDateRetriever = lastModifiedDateRetriever;
+			_invalidContentBehaviour = invalidContentBehaviour;
 			_errorBehaviour = errorBehaviour;
 			_logger = logger;
 		}
