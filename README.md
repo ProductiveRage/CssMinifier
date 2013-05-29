@@ -72,9 +72,9 @@ In lieu of the kind of source mapping that can be done with javascript this can 
 
 The **MediaQueryGroupingCssLoader** will take all style blocks that are wrapped in media queries and move them below the non-media-query-wrapped content, but any media query blocks with the same criteria will be combined. This can improve performance on some devices, specifically mobiles, at the cost of manipulation of the content - if the ordering of your styles is significant then this could cause problems! (If this is the case then I recommend a look at my blog post [Non-cascading CSS](http://www.productiverage.com/Read/42)! :)
 
-The **LessCssOpeningBodyTagRenamer** and **ContentReplacingTextFileLoader** classes can be used to remove the overhead of wrapping files in a body tag to restrict the scope of any LESS values or mixins defined in them, to prevent them over-writing any pre-existing values or mixins with the same name. This is also covered in the post linked above - essentially if you have source content
+The **LessCssOpeningHtmlTagRenamer** and **ContentReplacingTextFileLoader** classes can be used to remove the overhead of wrapping files in a html tag to restrict the scope of any LESS values or mixins defined in them, to prevent them over-writing any pre-existing values or mixins with the same name. This is also covered in the post linked above - essentially if you have source content
 
-    body
+    html
     {
         @color: #4D926F;
         div.Header
@@ -85,8 +85,8 @@ The **LessCssOpeningBodyTagRenamer** and **ContentReplacingTextFileLoader** clas
 
 then the value "@color" will will not be overwritten in the parent scope, if it exists, but this is compiled to
 
-    body div.header{color:#4D926F}
+    html div.header{color:#4D926F}
 
-But use of **LessCssOpeningBodyTagRenamer** and **ContentReplacingTextFileLoader** can allow the body tag to exist in the source and for the scope to be restricted, but for the output to be
+But use of **LessCssOpeningHtmlTagRenamer** and **ContentReplacingTextFileLoader** can allow the html tag to exist in the source and for the scope to be restricted, but for the output to be
 
     div.header{color:#4D926F}
