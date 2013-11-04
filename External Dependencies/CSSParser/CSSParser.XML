@@ -57,6 +57,46 @@
             This is the colon between a Style Property and Value (not any colons that may exist in a media query, for example)
             </summary>
         </member>
+        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.#ctor(CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent,System.Int32,System.Collections.Generic.List{System.Char})">
+            <summary>
+            All instances returned from requests to the Next property will share the same TextReaderWithReadAheadEvent instance and use this as the
+            synchronisation object when any operations that must be thread safe will occur. This includes any calls to Read since it must be guaranteed
+            that each Read call can transmit the read character(s) to any TextReaderStringNavigator instances that are lagging behind to ensure that
+            their catchUpQueue is complete. A lock must also be obtained any time that a new TextReaderStringNavigator is created that shares the
+            TextReaderWithReadAheadEvent instance since its constructor will register with the ReadAhead event and mustn't miss any data from Read requests
+            that may occur during the class' instantiation. By extension a lock must be obtained any time that the catchUpQueue is accessed (either to
+            retrieve data or to change the contents) since its contents may be changed where the ReadAhead subscription is processed which may be
+            across multiple threads. The catchUpQueue's purpose is to allow instances of TextReaderStringNavigator that lag behind the wrapped
+            TextReaderWithReadAheadEvent to return CurrentCharacter data without having to query the TextReaderWithReadAheadEvent (which won't be able
+            to help since it has progressed past the TextReaderStringNavigator's position). This mechanism can't prevent the source TextReader from being
+            progressed by another object with a reference to the TextReader but it does guarantee that all of the TextReaderStringNavigator instances will
+            have data consistent with the other TextReaderStringNavigator instances at all times. The TextReaderWithReadAheadEvent being private is an
+            extra layer of insurance that its Read method will not be called without the proper locks in place and should help ensure that a reference
+            to TextReaderWithReadAheadEvents can not be leaked out which could risk deadlocks as they are used as the synchronisation object.
+            </summary>
+        </member>
+        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.TryToGetCharacterString(System.Int32)">
+            <summary>
+            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
+            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
+            content to deliver. This will never return null.
+            </summary>
+        </member>
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.CurrentCharacter">
+            <summary>
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.Next">
+            <summary>
+            This will never return null
+            </summary>
+        </member>
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent.ReadAheadEventArgs.FromPosition">
+            <summary>
+            This will always be zero or greater
+            </summary>
+        </member>
         <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.TryToGetCharacterString(System.Int32)">
             <summary>
             This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
@@ -72,6 +112,30 @@
         <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.Next">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
+            </summary>
+        </member>
+        <member name="T:CSSParser.TextReaderNavigators.WeakEventSource`1">
+            <summary>
+            This class enables the specification of "weak events" (meaning that there is no direct reference to the listener from the event publisher) so
+            long as the event publisher can be written to make use of this (no change to listeners will then be required)
+            </summary>
+        </member>
+        <member name="M:CSSParser.TextReaderNavigators.WeakEventSource`1.IMakeEventCallbacks.ExecuteCallbackIfTargetStillAlive(System.Object,`0)">
+            <summary>
+            This will execute the callback unless its target was a WeakReference whose target has been collected, in which case it will return
+            false. It will return true if the callback was exected.
+            </summary>
+        </member>
+        <member name="M:CSSParser.TextReaderNavigators.WeakEventSource`1.IMakeEventCallbacks.CorrespondsTo(System.EventHandler{`0})">
+            <summary>
+            This indicates whether its callback corresponds to the specified event handler to enable the unhooking of event registrations
+            </summary>
+        </member>
+        <member name="P:CSSParser.TextReaderNavigators.WeakEventSource`1.IMakeEventCallbacks.IsTargetStillAlive">
+            <summary>
+            If false then the target was a WeakReference whose target has been collected. If true then either the reference is still active or a
+            static callback was specified (which has no target instance). This should be used to remove expired entries from a callback list, not
+            called before ExecuteCallbackIfTargetStillAlive since the target may be collected between testing this and calling that method.
             </summary>
         </member>
         <member name="M:CSSParser.ContentProcessors.CharacterProcessors.SelectorOrStyleSegment.IsNextWordOneOfThePseudoClasses(CSSParser.StringNavigators.IWalkThroughStrings)">
@@ -102,7 +166,7 @@
             content to deliver. This will never return null.
             </summary>
         </member>
-        <member name="P:CSSParser.StringNavigators.StringNavigator.CSSParser#StringNavigators#IWalkThroughStrings#CurrentCharacter">
+        <member name="P:CSSParser.StringNavigators.StringNavigator.CurrentCharacter">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
@@ -124,13 +188,49 @@
         <member name="M:CSSParser.Parser.ParseCSS(System.String)">
             <summary>
             This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
-            CSS does not support single line comment, unlike LESS CSS. The content parsing is deferred so that the work to parse the content
+            CSS does not support single line comments, unlike LESS CSS. The content parsing is deferred so that the work to parse the content
+            is only performed as the returned data is enumerated over. All runs of characters that are of the same CharacterCategorisationOptions
+            will be combined into one string (note: this means that runs of opening braces that aren't separated by whitespace will be combined
+            into one string containing those multiple braces).
+            </summary>
+        </member>
+        <member name="M:CSSParser.Parser.ParseCSS(System.IO.TextReader)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
+            CSS does not support single line comments, unlike LESS CSS. The content parsing is deferred so that the work to parse the content
+            is only performed as the returned data is enumerated over. All runs of characters that are of the same CharacterCategorisationOptions
+            will be combined into one string (note: this means that runs of opening braces that aren't separated by whitespace will be combined
+            into one string containing those multiple braces).
+            </summary>
+        </member>
+        <member name="M:CSSParser.Parser.ParseCSS(CSSParser.StringNavigators.IWalkThroughStrings)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
+            CSS does not support single line comments, unlike LESS CSS. The content parsing is deferred so that the work to parse the content
             is only performed as the returned data is enumerated over. All runs of characters that are of the same CharacterCategorisationOptions
             will be combined into one string (note: this means that runs of opening braces that aren't separated by whitespace will be combined
             into one string containing those multiple braces).
             </summary>
         </member>
         <member name="M:CSSParser.Parser.ParseLESS(System.String)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
+            LESS CSS supports single line comments as well the multiline comment format supported by standard CSS. The content parsing is
+            deferred so that the work to parse the content is only performed as the returned data is enumerated over. All runs of characters
+            that are of the same CharacterCategorisationOptions will be combined into one string (note: this means that runs of opening braces
+            that aren't separated by whitespace will be combined into one string containing those multiple braces).
+            </summary>
+        </member>
+        <member name="M:CSSParser.Parser.ParseLESS(System.IO.TextReader)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
+            LESS CSS supports single line comments as well the multiline comment format supported by standard CSS. The content parsing is
+            deferred so that the work to parse the content is only performed as the returned data is enumerated over. All runs of characters
+            that are of the same CharacterCategorisationOptions will be combined into one string (note: this means that runs of opening braces
+            that aren't separated by whitespace will be combined into one string containing those multiple braces).
+            </summary>
+        </member>
+        <member name="M:CSSParser.Parser.ParseLESS(CSSParser.StringNavigators.IWalkThroughStrings)">
             <summary>
             This will never return null nor a set containing any null references. It will throw an exception for a null content reference.
             LESS CSS supports single line comments as well the multiline comment format supported by standard CSS. The content parsing is
