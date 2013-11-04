@@ -131,16 +131,12 @@ namespace CSSMinifier.FileLoaders
 		/// from earlier line numbers may appear with more specific ids for the nested properties - we only want the injected id that is closest to the
 		/// style property, since that is the most descriptive).
 		/// </summary>
-		private string TidySelectorContent(string cssSelector, IEnumerable<HtmlId> insertedIds)
+		private string TidySelectorContent(string cssSelector, HashSet<string> insertedIds)
 		{
 			if (cssSelector == null)
 				throw new ArgumentNullException("cssSelector");
 			if (insertedIds == null)
 				throw new ArgumentNullException("insertedIds");
-
-			var insertedIdsArray = insertedIds.ToArray();
-			if (insertedIdsArray.Any(id => id == null))
-				throw new ArgumentException("Null reference encountered in insertedIds set");
 
 			// Example content before marker injection:
 			// 
@@ -205,7 +201,7 @@ namespace CSSMinifier.FileLoaders
 			//   eg. "#Test19.css_1"
 
 			// Note: While "#" and "." may be used as part of the inserted marker, the child selector ">" may not and so we'll need to break on
-			// any whitespace AND the ">" symbol (this is protected against by the HtmlId constructor validation)
+			// any whitespace AND the ">" symbol (this is checked for in the GetInsertedIds method)
 
 			var tidiedSelectors = new List<string>();
 			foreach (var selector in cssSelector.Split(',').Select(s => s.Trim()).Where(s => s != ""))
@@ -233,7 +229,7 @@ namespace CSSMinifier.FileLoaders
 				for (var index = 0; index < selectorSegments.Length; index++)
 				{
 					var selectorSegmentWithoutAnyPseudoClass = selectorSegments[index].Split(':')[0];
-					if (insertedIds.Any(id => selectorSegmentWithoutAnyPseudoClass == ("#" + id.Value)))
+					if (insertedIds.Contains(selectorSegmentWithoutAnyPseudoClass))
 					{
 						if (index == (selectorSegments.Length - 1))
 							contentToReplaceSelectorWith = selectorSegmentWithoutAnyPseudoClass;
@@ -267,7 +263,7 @@ namespace CSSMinifier.FileLoaders
 		/// <summary>
 		/// This will never return null, nor a set containing any nulls. It may return an empty set if no Ids have been reported as being inserted into the content.
 		/// </summary>
-		private IEnumerable<HtmlId> GetInsertedIds()
+		private HashSet<string> GetInsertedIds()
 		{
 			var insertedMarkers = _insertedMarkerRetriever();
 			if (insertedMarkers == null)
@@ -276,54 +272,27 @@ namespace CSSMinifier.FileLoaders
 			var insertedMarkersArray = insertedMarkers.ToArray();
 			if (insertedMarkersArray.Any(m => m == null))
 				throw new Exception("InsertedMarkerRetriever returned a set containing a null reference");
-			var ids = new List<HtmlId>();
+
+			var ids = new HashSet<string>();
 			for (var index = 0; index < insertedMarkersArray.Length; index++)
 			{
 				var marker = insertedMarkersArray[index].Trim();
 				if (!marker.StartsWith("#") || !marker.EndsWith(","))
 					throw new Exception("InsertedMarkerRetriever returned a set containing an invalid value: " + marker);
 
-				try
-				{
-					ids.Add(new HtmlId(marker.Substring(1, marker.Length - 2)));
-				}
-				catch (ArgumentException e)
-				{
-					throw new Exception("InsertedMarkerRetriever returned a set containing an invalid value: " + marker, e);
-				}
-			}
-			return ids;
-		}
-
-		private class HtmlId
-		{
-			public HtmlId(string value)
-			{
-				if (string.IsNullOrWhiteSpace(value))
-					throw new ArgumentNullException("Null/blank value specified");
-
 				// Not a lot of point going to town over the validation here, ensuring it's not blank, doesn't contain any whitespace part-way through and
 				// doesn't have a hash or child selector symbol in it should do the job fine
-				value = value.Trim();
-				if (value.Any(c => char.IsWhiteSpace(c)))
+				var id = marker.Substring(0, marker.Length - 1).Trim();
+				if (id.Any(c => char.IsWhiteSpace(c)))
 					throw new ArgumentException("Id values may not contain whitespace (other than leading and/or trailing whitespace, which will be stripped");
-				if (value.Contains('#'))
-					throw new ArgumentException("Id values may not contain the hash character");
-				if (value.Contains('>'))
+				if (id.LastIndexOf('#') > 0)
+					throw new ArgumentException("Id values may not contain the hash character other than once, at the start");
+				if (id.Contains('>'))
 					throw new ArgumentException("Id values may not contain the child selector (\">\") character");
 
-				Value = value;
+				ids.Add(id);
 			}
-
-			/// <summary>
-			/// This will never be null or blank
-			/// </summary>
-			public string Value { get; private set; }
-
-			public override string ToString()
-			{
-				return base.ToString() + ":" + Value;
-			}
+			return ids;
 		}
 	}
 }
