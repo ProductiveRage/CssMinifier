@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using CSSParser;
+using CSSParser.ContentProcessors;
 
 namespace CSSMinifier.FileLoaders
 {
@@ -18,15 +20,19 @@ namespace CSSMinifier.FileLoaders
 	{
 		private readonly ITextFileLoader _fileLoader;
 		private readonly MarkerGenerator _markerGenerator;
-		public LessCssLineNumberingTextFileLoader(ITextFileLoader fileLoader, MarkerGenerator markerGenerator)
+		private readonly MarkerInsertionBehaviourOptions _markerInsertionBehaviour;
+		public LessCssLineNumberingTextFileLoader(ITextFileLoader fileLoader, MarkerGenerator markerGenerator, MarkerInsertionBehaviourOptions markerInsertionBehaviour)
 		{
 			if (fileLoader == null)
 				throw new ArgumentNullException("fileLoader");
 			if (markerGenerator == null)
 				throw new ArgumentNullException("markerGenerator");
+			if (!Enum.IsDefined(typeof(MarkerInsertionBehaviourOptions), markerInsertionBehaviour))
+				throw new ArgumentOutOfRangeException("markerInsertionBehaviour");
 
 			_fileLoader = fileLoader;
 			_markerGenerator = markerGenerator;
+			_markerInsertionBehaviour = markerInsertionBehaviour;
 		}
 
 		/// <summary>
@@ -34,6 +40,12 @@ namespace CSSMinifier.FileLoaders
 		/// The returned content (if any) is not escaped so may alter the markup if required.
 		/// </summary>
 		public delegate string MarkerGenerator(string relativePath, int lineNumber);
+
+		public enum MarkerInsertionBehaviourOptions
+		{
+			BeforeAllSelectors,
+			NotBeforeBareElementSelectors
+		}
 
 		/// <summary>
 		/// This will never return null, it will throw an exception for a null or empty filename - it is up to the particular implementation whether or not to throw an
@@ -78,16 +90,46 @@ namespace CSSMinifier.FileLoaders
 					(index > 0) ? (char?)content[index - 1] : null
 				);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertAfterCurrentCharacter)
-					stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+				{
+					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(stringBuilder.ToString()))
+						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+				}
 				stringBuilder.Insert(0, currentCharacter);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertBeforeCurrentCharacter)
-					stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+				{
+					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(stringBuilder.ToString()))
+						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+				}
 				contentAnalyser = analysisResult.NextAnalyser;
 
 				if (currentCharacter == '\n')
 					lineNumber--;
 			}
 			return stringBuilder.ToString();
+		}
+
+		/// <summary>
+		/// If the NotBeforeBareElementSelectors MarkerInsertionBehaviourOptions value has been specified for this instance, then we need to look at the content
+		/// at the point of insertion - this should always be a selector followed by an OpenBrace and then nested selectors (if the content is LESS) or style
+		/// properties. If the selector only targets bare elements (ie. html tags with no id, class or attribute selector) then no marker should be inserted.
+		/// The CSSParser is used to identify the selector content (so that any comments can be dismissed) which may seem potentially expensive for the job
+		/// in hand, but the amount of content passed in here should be short in most cases (since it should be a selector set). The costs savings for the
+		/// InjectedIdTidyingTextFileLoader may be significant as well, if the content has deeply nested selectors and wraps every file in a html tag to
+		/// limit the scope of any values or mixins (this only applies to LESS content).
+		/// </summary>
+		private bool IsAcceptableToInsertHere(string styleContentAtInsertionPoint)
+		{
+			if (styleContentAtInsertionPoint == null)
+				throw new ArgumentNullException("styleContentAtInsertionPoint");
+
+			var selector = string.Join(
+				"",
+				Parser.ParseLESS(styleContentAtInsertionPoint)
+					.TakeWhile(c => c.CharacterCategorisation != CharacterCategorisationOptions.OpenBrace)
+					.Where(c => c.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
+					.Select(c => c.Value)
+			);
+			return selector.IndexOfAny(new[] { '.', '#', ':', '[', '>' }) != -1;
 		}
 
 		private interface IAnalyseCharacters

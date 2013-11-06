@@ -18,7 +18,8 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
-				(relativePath, lineNumber) => "#test.css_" + lineNumber + ","
+				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
+				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
 			);
 
 			Assert.Equal(
@@ -38,7 +39,8 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
-				(relativePath, lineNumber) => "#test.css_" + lineNumber + ","
+				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
+				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
 			);
 
 			Assert.Equal(
@@ -58,7 +60,8 @@ namespace UnitTests
 				new FixedListCssContentLoader(
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
-				(relativePath, lineNumber) => "#test.css_" + lineNumber + ","
+				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
+				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
 			);
 
 			Assert.Equal(

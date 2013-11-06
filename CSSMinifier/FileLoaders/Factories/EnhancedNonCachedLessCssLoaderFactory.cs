@@ -59,7 +59,8 @@ namespace CSSMinifier.FileLoaders.Factories
 											scopingBodyTagReplaceString
 										)
 									),
-									recordingMarkerGenerator.MarkerGenerator
+									recordingMarkerGenerator.MarkerGenerator,
+									LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeBareElementSelectors
 								),
 								SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
 								_errorBehaviour,
