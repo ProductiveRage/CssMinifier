@@ -60,7 +60,7 @@ namespace CSSMinifier.FileLoaders.Factories
 										)
 									),
 									recordingMarkerGenerator.MarkerGenerator,
-									LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeBareElementSelectors
+									LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors
 								),
 								SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
 								_errorBehaviour,
