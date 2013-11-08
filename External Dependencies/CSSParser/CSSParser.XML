@@ -15,11 +15,12 @@
             references or it the processing failed.
             </summary>
         </member>
-        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings.TryToGetCharacterString(System.Int32)">
+        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
-            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
-            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
-            content to deliver. This will never return null.
+            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
+            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
+            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
+            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
         <member name="P:CSSParser.StringNavigators.IWalkThroughStrings.CurrentCharacter">
@@ -52,6 +53,11 @@
             This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
             </summary>
         </member>
+        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings_Extensions.DoesCurrentContentMatch(CSSParser.StringNavigators.IWalkThroughStrings,System.String)">
+            <summary>
+            This is a convenience method signature onto DoesCurrentContentMatch where a null optionalComparer is passed (meaning precise matching is required)
+            </summary>
+        </member>
         <member name="F:CSSParser.ContentProcessors.CharacterCategorisationOptions.StylePropertyColon">
             <summary>
             This is the colon between a Style Property and Value (not any colons that may exist in a media query, for example)
@@ -75,11 +81,12 @@
             to TextReaderWithReadAheadEvents can not be leaked out which could risk deadlocks as they are used as the synchronisation object.
             </summary>
         </member>
-        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.TryToGetCharacterString(System.Int32)">
+        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
-            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
-            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
-            content to deliver. This will never return null.
+            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
+            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
+            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
+            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
         <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.CurrentCharacter">
@@ -97,11 +104,12 @@
             This will always be zero or greater
             </summary>
         </member>
-        <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.TryToGetCharacterString(System.Int32)">
+        <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
-            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
-            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
-            content to deliver. This will never return null.
+            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
+            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
+            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
+            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
         <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.CurrentCharacter">
@@ -144,6 +152,13 @@
             the current position will be moved over and the content, if any, taken from there.
             </summary>
         </member>
+        <member name="F:CSSParser.ContentProcessors.CharacterProcessors.SelectorOrStyleSegment.PseudoClasses">
+            <summary>
+            These are ordered by length as a very minor optimisation, it may allow matches to occur more quickly since less characters may have to be tested
+            (to be honest, it would probably make more sense to arrange them in order of likelihood that they will appear and the most expensive case is when
+            none of them are present and no ordering will help with that)
+            </summary>
+        </member>
         <member name="P:CSSParser.ContentProcessors.CharacterProcessors.SelectorOrStyleSegment.CharacterCategorisationBehaviourOverride.CharacterProcessorToReturnTo">
             <summary>
             This will never be null
@@ -159,11 +174,12 @@
             This is the location of the start of the string in the source data
             </summary>
         </member>
-        <member name="M:CSSParser.StringNavigators.StringNavigator.TryToGetCharacterString(System.Int32)">
+        <member name="M:CSSParser.StringNavigators.StringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
-            This will try to extract a string of length requiredNumberOfCharacters from the current position in the string navigator. If there are insufficient
-            characters available, then a string containing all of the remaining characters will be returned. This will be an empty string if there is no more
-            content to deliver. This will never return null.
+            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
+            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
+            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
+            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
         <member name="P:CSSParser.StringNavigators.StringNavigator.CurrentCharacter">
