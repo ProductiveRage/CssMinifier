@@ -44,7 +44,27 @@ namespace CSSMinifier.FileLoaders
 		public enum MarkerInsertionBehaviourOptions
 		{
 			BeforeAllSelectors,
-			NotBeforeBareElementSelectors
+
+			/// <summary>
+			/// If there are deeply nested selectors (requiring LESS processing) then inserting markers before each of them can result in a lot of unnecessary selectors
+			/// when the content is flattened (eg. html { h2 { color: red; } } may become #test.css_1, html { #test.css_2, h2 { color: red; } } which would become
+			/// #test.css_1 #test.css_2, html #test.css_2, #test.css_1 h2, html h2 { color: red; } after the LESS processing flattens the structure). These later
+			/// need to be tidied up (leaving only html #test.css_2, html h2 { color: red; } in this case - the source indicator and the original selector). The
+			/// deeper the nesting, the larger the generated content and the more work required to tidy the unneeded selectors. If stylesheets use a scope-
+			/// restricting html tag around the content (like an IIFE in JavaScript) to make any LESS values and mixins "private" then the nesting immediately
+			/// becomes one level deeper. This option will not insert markers around selectors that target html elements without any class name, id or attribute
+			/// selector. This will make the overall process quicker but will not insert source mapping markers for most of the Resets stylesheet, for example.
+			/// </summary>
+			NotBeforeBareElementSelectors,
+			
+			/// <summary>
+			/// This is a variation on NotBeforeBareElementSelectors that will only skip marker insertion for single selectors that target html elements with no class
+			/// name, id or attribute selector. This will mean that Resets styles will get marker insertions but some Theme styles may not get insertions (if, for
+			/// example there is a style "strong { font-weight: bold; }" then it will not get a source mapping marker inserted for it). This compromise means that
+			/// scope-restricting html outer layers do not get a marker inserted (making the compilation process quicker) while almost all "real selectors" do
+			/// get markers.
+			/// </summary>
+			NotBeforeIsolatedBareElementSelectors
 		}
 
 		/// <summary>
@@ -109,12 +129,12 @@ namespace CSSMinifier.FileLoaders
 		}
 
 		/// <summary>
-		/// If the NotBeforeBareElementSelectors MarkerInsertionBehaviourOptions value has been specified for this instance, then we need to look at the content
-		/// at the point of insertion - this should always be a selector followed by an OpenBrace and then nested selectors (if the content is LESS) or style
-		/// properties. If the selector only targets bare elements (ie. html tags with no id, class or attribute selector) then no marker should be inserted.
-		/// The CSSParser is used to identify the selector content (so that any comments can be dismissed) which may seem potentially expensive for the job
-		/// in hand, but the amount of content passed in here should be short in most cases (since it should be a selector set). The costs savings for the
-		/// InjectedIdTidyingTextFileLoader may be significant as well, if the content has deeply nested selectors and wraps every file in a html tag to
+		/// If the NotBeforeBareElementSelectors or NotBeforeIsolatedBareElementSelectors MarkerInsertionBehaviourOptions values have been specified for this instance,
+		/// then we need to look at the content at the point of insertion - this should always be a selector followed by an OpenBrace and then nested selectors (if the
+		/// content is LESS) or style properties. If the selector only targets bare elements (ie. html tags with no id, class or attribute selector) then no marker
+		/// should be inserted. The CSSParser is used to identify the selector content (so that any comments can be dismissed) which may seem potentially expensive
+		/// for the job in hand, but the amount of content passed in here should be short in most cases (since it should be a selector set). The costs savings for
+		/// the InjectedIdTidyingTextFileLoader may be significant as well, if the content has deeply nested selectors and wraps every file in a html tag to
 		/// limit the scope of any values or mixins (this only applies to LESS content).
 		/// </summary>
 		private bool IsAcceptableToInsertHere(string styleContentAtInsertionPoint)
@@ -129,6 +149,15 @@ namespace CSSMinifier.FileLoaders
 					.Where(c => c.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
 					.Select(c => c.Value)
 			);
+			if (_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors)
+			{
+				// If NotBeforeIsolatedBareElementSelectors is specified but a selector separator is present then the condition has not been met (the are multiple
+				// selectors, this is not an "isolated" selector). I'm taking a slight liberty here by ignoring whitespace, feasibly "h2 a" could be considered to
+				// be a non-isolated selector as it has two segments, but since it would only be a single selector I'm happy enough to consider an isolated bare
+				// selector (so long as it doesn't have any of the characters that are checked for further down).
+				if (selector.IndexOfAny(new[] { ',' }) != -1)
+					return false;
+			}
 			return selector.IndexOfAny(new[] { '.', '#', ':', '[', '>' }) != -1;
 		}
 
