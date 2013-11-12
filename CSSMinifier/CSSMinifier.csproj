@@ -56,12 +56,14 @@
     <Compile Include="FileLoaders\Factories\DefaultNonCachedLessCssLoaderFactory.cs" />
     <Compile Include="FileLoaders\ErrorBehaviourOptions.cs" />
     <Compile Include="FileLoaders\Factories\IGenerateCssLoaders.cs" />
+    <Compile Include="FileLoaders\Helpers\SourceMappingMarkerIdGenerator.cs" />
     <Compile Include="FileLoaders\LessCssOpeningHtmlTagRenamer.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
     <Compile Include="FileLoaders\InjectedIdTidyingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssCommentRemovingTextFileLoader.cs" />
     <Compile Include="FileLoaders\LessCssLineNumberingTextFileLoader.cs" />
     <Compile Include="FileLoaders\MediaQueryGroupingCssLoader.cs" />
+    <Compile Include="FileLoaders\MultiContentReplacingTextFileLoader.cs" />
     <Compile Include="LastModifiedDateRetrievers\SingleFolderLastModifiedDateRetriever.cs" />
     <Compile Include="LastModifiedDateRetrievers\ILastModifiedDateRetriever.cs" />
     <Compile Include="FileLoaders\ITextFileLoader.cs" />
