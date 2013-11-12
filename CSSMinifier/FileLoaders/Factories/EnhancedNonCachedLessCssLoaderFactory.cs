@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using CSSMinifier.FileLoaders.Helpers;
 using CSSMinifier.Logging;
 using CSSMinifier.PathMapping;
 
@@ -42,138 +41,40 @@ namespace CSSMinifier.FileLoaders.Factories
 		public ITextFileLoader Get()
 		{
 			var scopingBodyTagReplaceString = "REPLACEME";
-
-			var recordingMarkerGenerator = new LessCssLineNumberMarkerGenerator.RecordingMarkerGenerator(
-				LessCssLineNumberMarkerGenerator.GetPseudoHtmlIdMarkerGeneratorForSingleFolderCombiningProcess()
-			);
-
+			var sourceMappingMarkerIdGenerator = new SourceMappingMarkerIdGenerator();
 			return new MediaQueryGroupingCssLoader(
-				new InjectedIdTidyingTextFileLoader(
-					new ContentReplacingTextFileLoader(
-						new DotLessCssCssLoader(
-							new SameFolderImportFlatteningCssLoader(
-								new LessCssLineNumberingTextFileLoader(
-									new LessCssCommentRemovingTextFileLoader(
-										new LessCssOpeningHtmlTagRenamer(
-											_contentLoader,
-											scopingBodyTagReplaceString
-										)
+				new MultiContentReplacingTextFileLoader(
+					new InjectedIdTidyingTextFileLoader(
+						new ContentReplacingTextFileLoader(
+							new DotLessCssCssLoader(
+								new SameFolderImportFlatteningCssLoader(
+									new LessCssLineNumberingTextFileLoader(
+										new LessCssCommentRemovingTextFileLoader(
+											new LessCssOpeningHtmlTagRenamer(
+												_contentLoader,
+												scopingBodyTagReplaceString
+											)
+										),
+										sourceMappingMarkerIdGenerator.MarkerGenerator,
+										LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors
 									),
-									recordingMarkerGenerator.MarkerGenerator,
-									LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors
+									SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
+									_errorBehaviour,
+									_errorBehaviour,
+									_logger
 								),
-								SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
-								_errorBehaviour,
+								DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
 								_errorBehaviour,
 								_logger
 							),
-							DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
-							_errorBehaviour,
-							_logger
+							scopingBodyTagReplaceString + " ",
+							""
 						),
-						scopingBodyTagReplaceString + " ",
-						""
+						() => sourceMappingMarkerIdGenerator.GetInsertedMarkers()
 					),
-					() => recordingMarkerGenerator.InsertedMarkers
+					() => sourceMappingMarkerIdGenerator.GetAbbreviatedMarkerExtensions()
 				)
 			);
-		}
-
-		private static class LessCssLineNumberMarkerGenerator
-		{
-			// We'll leave in any "." characters since we want it to appear like "#Test.css_123"
-			private static char[] AllowedNonAlphaNumericCharacters = new[] { '_', '-', '.' };
-
-			/// <summary>
-			/// This will generate a html-id-type string to insert into the markup, based on the filename and line number - eg. "#Test.css_1418," (the trailing
-			/// comma is required for it to be inserted into the start of existing declaration header)
-			/// </summary>
-			public static LessCssLineNumberingTextFileLoader.MarkerGenerator GetPseudoHtmlIdMarkerGeneratorForSingleFolderCombiningProcess()
-			{
-				return (relativePath, lineNumber) =>
-				{
-					if (string.IsNullOrWhiteSpace(relativePath))
-						throw new ArgumentException("Null/blank relativePath specified");
-					if (lineNumber <= 0)
-						throw new ArgumentOutOfRangeException("lineNumber", "must be greater than zero");
-
-					// Working on the assumpton that all files are located in the same folder, if there was a relative path to the first file (which may then include others),
-					// we may as well remove that relative path and consider the filename only - this is assuming that the SameFolderImportFlatteningCssLoader is being used
-					// in the stylesheet compilation process
-					relativePath = relativePath.Replace("\\", "/").Split('/').Last();
-
-					// Make into a html-id-valid form
-					var relativePathHtmlIdFriendly = "";
-					for (var index = 0; index < relativePath.Length; index++)
-					{
-						if (!AllowedNonAlphaNumericCharacters.Contains(relativePath[index]) && !char.IsLetter(relativePath[index]) && !char.IsNumber(relativePath[index]))
-							relativePathHtmlIdFriendly += "_";
-						else
-							relativePathHtmlIdFriendly += relativePath[index];
-					}
-
-					// Remove any runs of "_" that we've are (presumablY) a result of the above manipulation
-					while (relativePathHtmlIdFriendly.IndexOf("__") != -1)
-						relativePathHtmlIdFriendly = relativePath.Replace("__", "_");
-
-					// Ids must start with a letter, so try to find the first letter in the content (if none, then return "" to indicate no insertion required)
-					var startIndexOfLetterContent = relativePathHtmlIdFriendly
-						.Select((character, index) => new { Character = character, Index = index })
-						.FirstOrDefault(c => char.IsLetter(c.Character));
-					if (startIndexOfLetterContent == null)
-						return "";
-
-					// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma
-					return string.Format(
-						"#{0}_{1}, ",
-						relativePathHtmlIdFriendly.Substring(startIndexOfLetterContent.Index),
-						lineNumber
-					);
-				};
-			}
-
-			public class RecordingMarkerGenerator
-			{
-				private readonly HashSet<string> _insertedMarkers;
-				public RecordingMarkerGenerator(LessCssLineNumberingTextFileLoader.MarkerGenerator markerGenerator)
-				{
-					if (markerGenerator == null)
-						throw new ArgumentNullException("markerGenerator");
-
-					_insertedMarkers = new HashSet<string>();
-					MarkerGenerator = (relativePath, lineNumber) =>
-					{
-						var marker = markerGenerator(relativePath, lineNumber);
-						if (!string.IsNullOrWhiteSpace(marker))
-						{
-							lock (_insertedMarkers)
-							{
-								_insertedMarkers.Add(marker);
-							}
-						}
-						return marker;
-					};
-				}
-
-				/// <summary>
-				/// This will never return null
-				/// </summary>
-				public LessCssLineNumberingTextFileLoader.MarkerGenerator MarkerGenerator { get; private set; }
-
-				/// <summary>
-				/// This will never return null, nor a set containing any null or blank entries. It will return an empty set if no insertions were made.
-				/// </summary>
-				public IEnumerable<string> InsertedMarkers
-				{
-					get
-					{
-						lock (_insertedMarkers)
-						{
-							return _insertedMarkers.ToArray();
-						}
-					}
-				}
-			}
 		}
 	}
 }
