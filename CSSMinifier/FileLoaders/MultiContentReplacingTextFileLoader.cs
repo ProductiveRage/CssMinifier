@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace CSSMinifier.FileLoaders
 {
 	/// <summary>
-	/// TODO
+	/// This will make a series of replacements in content, in the order in which they are specified. No intelligence is applied, nor is any parsing performed - these
+	/// are just straight replacements. This may be used with the SourceMappingMarkerIdGenerator / LessCssLineNumberingTextFileLoader combination.
 	/// </summary>
 	public class MultiContentReplacingTextFileLoader : ITextFileLoader
 	{
@@ -22,7 +23,7 @@ namespace CSSMinifier.FileLoaders
 		}
 
 		/// <summary>
-		/// TODO
+		/// This must not return null, nor any entries with a null Key or Value. It will apply the replacements in the order provided.
 		/// </summary>
 		public delegate IEnumerable<KeyValuePair<string, string>> ReplacementRetriever();
 

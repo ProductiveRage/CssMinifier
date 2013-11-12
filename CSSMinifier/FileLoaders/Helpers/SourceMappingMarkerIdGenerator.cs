@@ -6,7 +6,11 @@ using System.Text;
 namespace CSSMinifier.FileLoaders.Helpers
 {
 	/// <summary>
-	/// TODO
+	/// This class may be used with the LessCssLineNumberingTextFileLoader, which enables the insertion of arbitrary markers at the starts of selectors - this implementation
+	/// will generate marker ids based on the filename and line number in the source in which the selector that is being added to was found. It will insert "abbreviated" ids
+	/// so that the content doesn't balloon as much when nested LESS selectors are used. After the content has been LESS-compiled, the MultiContentReplacingTextFileLoader
+	/// may be used to replace all of the abbreviated ids with the full versions. The abbreviated ids all have a "1" prefix which were not valid ids before html5, this
+	/// is to try to reduce the chance that an abbreviated id (that will be replaced out) will be the name of a real id in use in the stylesheets.
 	/// </summary>
 	public class SourceMappingMarkerIdGenerator
 	{
@@ -55,34 +59,41 @@ namespace CSSMinifier.FileLoaders.Helpers
 			if (startIndexOfLetterContent == null)
 				return "";
 
-			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma
-			var markerContent = string.Format(
-				"#{0}_{1}, ",
+			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma (we'll keep actual id
+			// content in the markerIdsAndAliases dictionary but we need to return a blob of CSS that can be inserted into the front of a selector and so
+			// we'll need a comma there otherwise we'll break the selector)
+			var markerId = string.Format(
+				"#{0}_{1}",
 				relativePathHtmlIdFriendly.Substring(startIndexOfLetterContent.Index),
 				lineNumber
 			);
-			string alias;
-			if (_markerIdsAndAliases.TryGetValue(markerContent, out alias))
-				return alias;
-			alias = string.Format(
-				"#1{0},",
-				NumberEncoder.Encode(_markerIdsAndAliases.Count)
-			);
-			_markerIdsAndAliases.Add(markerContent, alias);
-			return alias;
+			string aliasId;
+			if (!_markerIdsAndAliases.TryGetValue(markerId, out aliasId))
+			{
+				aliasId = string.Format(
+					"#1{0}",
+					NumberEncoder.Encode(_markerIdsAndAliases.Count)
+				);
+				_markerIdsAndAliases.Add(markerId, aliasId);
+			}
+			return aliasId + ",";
 		}
 
 		public IEnumerable<string> GetInsertedMarkers()
 		{
-			return _markerIdsAndAliases.Values.ToList().AsReadOnly();
+			// The actual markers that we inserted had commas at the end, so we need to add them in here too for consistency
+			return _markerIdsAndAliases.Values.Select(id => id + ",");
 		}
 
 		public IEnumerable<KeyValuePair<string, string>> GetAbbreviatedMarkerExtensions()
 		{
-			return _markerIdsAndAliases.ToDictionary(
-				entry => entry.Value,
-				entry => entry.Key
-			);
+			// When requesting the abbreviated-to-full lookup data, we return the ids only (no trailing commas). The replacements are returned in descending
+			// length order to ensure (if the replacements are performed in the order specified here) that incorrect partial replacements aren't made (eg.
+			// if there are ids "#1A" an "#1A1" then we need to replace all instances of "#1A1" first otherwise the "#1A" replacement will overwrite parts
+			// of the "#1A1" abbreviated ids, which will make the output appear corrupted)
+			return _markerIdsAndAliases
+				.Select(entry => new KeyValuePair<string, string>(entry.Value, entry.Key))
+				.OrderByDescending(entry => entry.Key.Length);
 		}
 
 		private static class NumberEncoder
