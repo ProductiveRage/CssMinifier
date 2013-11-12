@@ -102,6 +102,7 @@ namespace CSSMinifier.FileLoaders
 			var lineNumber = content.Split('\n').Length;
 			IAnalyseCharacters contentAnalyser = new StandardContentAnalyser();
 			var stringBuilder = new StringBuilder();
+			var selectorBuilder = new StringBuilder();
 			for (var index = content.Length - 1; index >= 0; index--)
 			{
 				var currentCharacter = content[index];
@@ -111,14 +112,17 @@ namespace CSSMinifier.FileLoaders
 				);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertAfterCurrentCharacter)
 				{
-					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(stringBuilder.ToString()))
+					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+					selectorBuilder.Clear();
 				}
 				stringBuilder.Insert(0, currentCharacter);
+				selectorBuilder.Insert(0, currentCharacter);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertBeforeCurrentCharacter)
 				{
-					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(stringBuilder.ToString()))
+					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
+					selectorBuilder.Clear();
 				}
 				contentAnalyser = analysisResult.NextAnalyser;
 
