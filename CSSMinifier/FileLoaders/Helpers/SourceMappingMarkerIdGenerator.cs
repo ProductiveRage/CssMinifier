@@ -7,20 +7,17 @@ namespace CSSMinifier.FileLoaders.Helpers
 {
 	/// <summary>
 	/// This class may be used with the LessCssLineNumberingTextFileLoader, which enables the insertion of arbitrary markers at the starts of selectors - this implementation
-	/// will generate marker ids based on the filename and line number in the source in which the selector that is being added to was found. It will insert "abbreviated" ids
-	/// so that the content doesn't balloon as much when nested LESS selectors are used. After the content has been LESS-compiled, the MultiContentReplacingTextFileLoader
-	/// may be used to replace all of the abbreviated ids with the full versions. The abbreviated ids all have a "1" prefix which were not valid ids before html5, this
-	/// is to try to reduce the chance that an abbreviated id (that will be replaced out) will be the name of a real id in use in the stylesheets.
+	/// will generate marker ids based on the filename and line number in the source in which the selector that is being added to was found
 	/// </summary>
 	public class SourceMappingMarkerIdGenerator
 	{
 		// We'll leave in any "." characters since we want it to appear like "#ProductDetail.css_123"
 		private static char[] AllowedNonAlphaNumericCharacters = new[] { '_', '-', '.' };
 
-		private readonly Dictionary<string, string> _markerIdsAndAliases;
+		private readonly List<string> _insertedMarkers;
 		public SourceMappingMarkerIdGenerator()
 		{
-			_markerIdsAndAliases = new Dictionary<string, string>();
+			_insertedMarkers = new List<string>();
 		}
 
 		/// <summary>
@@ -59,65 +56,21 @@ namespace CSSMinifier.FileLoaders.Helpers
 			if (startIndexOfLetterContent == null)
 				return "";
 
-			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma (we'll keep actual id
-			// content in the markerIdsAndAliases dictionary but we need to return a blob of CSS that can be inserted into the front of a selector and so
-			// we'll need a comma there otherwise we'll break the selector)
+			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma (we keep track of the ids
+			// that have been inserted (eg. "test.css_12") but have to return CSS content that may be injected into the start of a selector and so append a
+			// comma to it (eg. "test.css_12,")
 			var markerId = string.Format(
 				"#{0}_{1}",
 				relativePathHtmlIdFriendly.Substring(startIndexOfLetterContent.Index),
 				lineNumber
 			);
-			string aliasId;
-			if (!_markerIdsAndAliases.TryGetValue(markerId, out aliasId))
-			{
-				aliasId = string.Format(
-					"#1{0}",
-					NumberEncoder.Encode(_markerIdsAndAliases.Count)
-				);
-				_markerIdsAndAliases.Add(markerId, aliasId);
-			}
-			return aliasId + ",";
+			_insertedMarkers.Add(markerId);
+			return markerId + ",";
 		}
 
-		public IEnumerable<string> GetInsertedMarkers()
+		public IEnumerable<string> GetInsertedMarkerIds()
 		{
-			// The actual markers that we inserted had commas at the end, so we need to add them in here too for consistency
-			return _markerIdsAndAliases.Values.Select(id => id + ",");
-		}
-
-		public IEnumerable<KeyValuePair<string, string>> GetAbbreviatedMarkerExtensions()
-		{
-			// When requesting the abbreviated-to-full lookup data, we return the ids only (no trailing commas). The replacements are returned in descending
-			// length order to ensure (if the replacements are performed in the order specified here) that incorrect partial replacements aren't made (eg.
-			// if there are ids "#1A" an "#1A1" then we need to replace all instances of "#1A1" first otherwise the "#1A" replacement will overwrite parts
-			// of the "#1A1" abbreviated ids, which will make the output appear corrupted)
-			return _markerIdsAndAliases
-				.Select(entry => new KeyValuePair<string, string>(entry.Value, entry.Key))
-				.OrderByDescending(entry => entry.Key.Length);
-		}
-
-		private static class NumberEncoder
-		{
-			private const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
-
-			/// <summary>
-			/// This will throw an exception for a negative number, it will never return null or an empty string
-			/// </summary>
-			public static string Encode(int value)
-			{
-				if (value < 0)
-					throw new ArgumentOutOfRangeException("value", "must be zero or greater");
-
-				if (value == 0)
-					return CHARS.Substring(0, 1);
-				var stringBuilder = new StringBuilder();
-				while (value > 0)
-				{
-					stringBuilder.Append(CHARS[value % CHARS.Length]);
-					value = value / CHARS.Length;
-				}
-				return stringBuilder.ToString();
-			}
+			return _insertedMarkers.AsReadOnly();
 		}
 	}
 }

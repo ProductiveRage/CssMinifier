@@ -8,6 +8,7 @@ using UnitTests.Common;
 
 namespace UnitTests
 {
+	/* TODO: Re-use this test data against the new DotLessCssCssLoader?
 	public class InjectedIdTidyingTextFileLoaderTests
 	{
 		[Fact]
@@ -119,4 +120,5 @@ namespace UnitTests
 			);
 		}
 	}
+	 */
 }
