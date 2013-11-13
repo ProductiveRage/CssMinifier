@@ -8,7 +8,7 @@ namespace CSSMinifier.FileLoaders.Factories
 	/// <summary>
 	/// This will generate a stylesheet loader that will flatten all import statements, so long as they reference imports in the same location as the source file, compile
 	/// LESS to CSS and minify the results. It will apply further processing that may not always be desirable: 1. Pseudo id selectors will be injected that indicate which
-	/// source file and line number that each style block originated (eg. "#test.css_123"), 2. Any files that are fully wrapped in a body tag will have the body tag removed
+	/// source file and line number that each style block originated (eg. "#test.css_123"), 2. Any files that are fully wrapped in an html tag will have the html tag removed
 	/// from the final selectors (the assumption being that the wrapping body tag is to restrict the scope of any LESS values or mixins declared in the file and that it is
 	/// not required in the compiled output), 3. Media-query-wrapped sections will be moved to the end of the final content and sections combined into a single media query
 	/// for cases where multiple sections exist with the same media query criteria (this may introduce side effects if the styling was not written to withstand rearrangement).
@@ -40,39 +40,30 @@ namespace CSSMinifier.FileLoaders.Factories
 		/// </summary>
 		public ITextFileLoader Get()
 		{
-			var scopingBodyTagReplaceString = "REPLACEME";
+			var scopingHtmlTagReplaceString = "REPLACEME";
 			var sourceMappingMarkerIdGenerator = new SourceMappingMarkerIdGenerator();
 			return new MediaQueryGroupingCssLoader(
-				new MultiContentReplacingTextFileLoader(
-					new InjectedIdTidyingTextFileLoader(
-						new ContentReplacingTextFileLoader(
-							new DotLessCssCssLoader(
-								new SameFolderImportFlatteningCssLoader(
-									new LessCssLineNumberingTextFileLoader(
-										new LessCssCommentRemovingTextFileLoader(
-											new LessCssOpeningHtmlTagRenamer(
-												_contentLoader,
-												scopingBodyTagReplaceString
-											)
-										),
-										sourceMappingMarkerIdGenerator.MarkerGenerator,
-										LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors
-									),
-									SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
-									_errorBehaviour,
-									_errorBehaviour,
-									_logger
-								),
-								DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
-								_errorBehaviour,
-								_logger
+				new DotLessCssCssLoader(
+					new SameFolderImportFlatteningCssLoader(
+						new LessCssLineNumberingTextFileLoader(
+							new LessCssCommentRemovingTextFileLoader(
+								new LessCssOpeningHtmlTagRenamer(
+									_contentLoader,
+									scopingHtmlTagReplaceString
+								)
 							),
-							scopingBodyTagReplaceString + " ",
-							""
+							sourceMappingMarkerIdGenerator.MarkerGenerator,
+							selector => selector != scopingHtmlTagReplaceString // Don't insert marker ids on wrapper selectors that will be removed
 						),
-						() => sourceMappingMarkerIdGenerator.GetInsertedMarkers()
+						SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
+						_errorBehaviour,
+						_errorBehaviour,
+						_logger
 					),
-					() => sourceMappingMarkerIdGenerator.GetAbbreviatedMarkerExtensions()
+					() => sourceMappingMarkerIdGenerator.GetInsertedMarkerIds(),
+					scopingHtmlTagReplaceString,
+					_errorBehaviour,
+					_logger
 				)
 			);
 		}

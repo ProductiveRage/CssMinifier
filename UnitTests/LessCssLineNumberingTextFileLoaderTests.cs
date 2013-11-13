@@ -19,7 +19,7 @@ namespace UnitTests
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
 				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
-				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
+				null // optionalSelectorMarkerInsertionCondition
 			);
 
 			Assert.Equal(
@@ -40,7 +40,7 @@ namespace UnitTests
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
 				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
-				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
+				null // optionalSelectorMarkerInsertionCondition
 			);
 
 			Assert.Equal(
@@ -61,7 +61,7 @@ namespace UnitTests
 					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
 				),
 				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
-				LessCssLineNumberingTextFileLoader.MarkerInsertionBehaviourOptions.BeforeAllSelectors
+				null // optionalSelectorMarkerInsertionCondition
 			);
 
 			Assert.Equal(

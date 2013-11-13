@@ -42,7 +42,6 @@ namespace CSSMinifier.FileLoaders.Factories
 					_errorBehaviour,
 					_logger
 				),
-				DotLessCssCssLoader.LessCssMinificationTypeOptions.Minify,
 				_errorBehaviour,
 				_logger
 			);

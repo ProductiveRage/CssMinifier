@@ -10,9 +10,8 @@ namespace CSSMinifier.FileLoaders
 	/// This will insert markers into style declaration headers that may indicate which line number the declaration header ended on. If a marker format is specified that injects a new
 	/// html id then minified / combined style declarations can be mapped back to their source file and location (in this case the marker format would specify a fixed filename per
 	/// file and include the line number). The markerFormat will have the string "{0}" replaced with the relativePath (altered to try to generate html-id-friendly strings) and
-	/// "{1}" with the appropriate line number. In the case of LessCss nested style declarations, only the top-level declaration header will be considered elligible for marker
-	/// insertion. This will work best on content that has has comments removed since there is no provision in this code to ignore comments (if comments are not removed then
-	/// feasibly some markers will not be inserted correctly or at all).
+	/// "{1}" with the appropriate line number. This will work best on content that has has comments removed since there is no provision in this code to ignore comments
+	/// (if comments are not removed then feasibly some markers will not be inserted correctly or at all).
 	/// WARNING: This will not insert markers if the declaration header is wrapped in a media query. If LessCSS is used then media queries may be nested inside declarations,
 	/// this WILL still insert markers as expected.
 	/// </summary>
@@ -20,19 +19,19 @@ namespace CSSMinifier.FileLoaders
 	{
 		private readonly ITextFileLoader _fileLoader;
 		private readonly MarkerGenerator _markerGenerator;
-		private readonly MarkerInsertionBehaviourOptions _markerInsertionBehaviour;
-		public LessCssLineNumberingTextFileLoader(ITextFileLoader fileLoader, MarkerGenerator markerGenerator, MarkerInsertionBehaviourOptions markerInsertionBehaviour)
+		private readonly Predicate<string> _optionalSelectorMarkerInsertionCondition;
+		public LessCssLineNumberingTextFileLoader(ITextFileLoader fileLoader, MarkerGenerator markerGenerator, Predicate<string> optionalSelectorMarkerInsertionCondition)
 		{
 			if (fileLoader == null)
 				throw new ArgumentNullException("fileLoader");
 			if (markerGenerator == null)
 				throw new ArgumentNullException("markerGenerator");
-			if (!Enum.IsDefined(typeof(MarkerInsertionBehaviourOptions), markerInsertionBehaviour))
-				throw new ArgumentOutOfRangeException("markerInsertionBehaviour");
+			if (optionalSelectorMarkerInsertionCondition == null)
+				throw new ArgumentNullException("optionalSelectorMarkerInsertionCondition");
 
 			_fileLoader = fileLoader;
 			_markerGenerator = markerGenerator;
-			_markerInsertionBehaviour = markerInsertionBehaviour;
+			_optionalSelectorMarkerInsertionCondition = optionalSelectorMarkerInsertionCondition;
 		}
 
 		/// <summary>
@@ -40,32 +39,6 @@ namespace CSSMinifier.FileLoaders
 		/// The returned content (if any) is not escaped so may alter the markup if required.
 		/// </summary>
 		public delegate string MarkerGenerator(string relativePath, int lineNumber);
-
-		public enum MarkerInsertionBehaviourOptions
-		{
-			BeforeAllSelectors,
-
-			/// <summary>
-			/// If there are deeply nested selectors (requiring LESS processing) then inserting markers before each of them can result in a lot of unnecessary selectors
-			/// when the content is flattened (eg. html { h2 { color: red; } } may become #test.css_1, html { #test.css_2, h2 { color: red; } } which would become
-			/// #test.css_1 #test.css_2, html #test.css_2, #test.css_1 h2, html h2 { color: red; } after the LESS processing flattens the structure). These later
-			/// need to be tidied up (leaving only html #test.css_2, html h2 { color: red; } in this case - the source indicator and the original selector). The
-			/// deeper the nesting, the larger the generated content and the more work required to tidy the unneeded selectors. If stylesheets use a scope-
-			/// restricting html tag around the content (like an IIFE in JavaScript) to make any LESS values and mixins "private" then the nesting immediately
-			/// becomes one level deeper. This option will not insert markers around selectors that target html elements without any class name, id or attribute
-			/// selector. This will make the overall process quicker but will not insert source mapping markers for most of the Resets stylesheet, for example.
-			/// </summary>
-			NotBeforeBareElementSelectors,
-			
-			/// <summary>
-			/// This is a variation on NotBeforeBareElementSelectors that will only skip marker insertion for single selectors that target html elements with no class
-			/// name, id or attribute selector. This will mean that Resets styles will get marker insertions but some Theme styles may not get insertions (if, for
-			/// example there is a style "strong { font-weight: bold; }" then it will not get a source mapping marker inserted for it). This compromise means that
-			/// scope-restricting html outer layers do not get a marker inserted (making the compilation process quicker) while almost all "real selectors" do
-			/// get markers.
-			/// </summary>
-			NotBeforeIsolatedBareElementSelectors
-		}
 
 		/// <summary>
 		/// This will never return null, it will throw an exception for a null or empty filename - it is up to the particular implementation whether or not to throw an
@@ -112,7 +85,7 @@ namespace CSSMinifier.FileLoaders
 				);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertAfterCurrentCharacter)
 				{
-					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
+					if ((_optionalSelectorMarkerInsertionCondition == null) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
 					selectorBuilder.Clear();
 				}
@@ -120,7 +93,7 @@ namespace CSSMinifier.FileLoaders
 				selectorBuilder.Insert(0, currentCharacter);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertBeforeCurrentCharacter)
 				{
-					if ((_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.BeforeAllSelectors) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
+					if ((_optionalSelectorMarkerInsertionCondition == null) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
 					selectorBuilder.Clear();
 				}
@@ -133,36 +106,27 @@ namespace CSSMinifier.FileLoaders
 		}
 
 		/// <summary>
-		/// If the NotBeforeBareElementSelectors or NotBeforeIsolatedBareElementSelectors MarkerInsertionBehaviourOptions values have been specified for this instance,
-		/// then we need to look at the content at the point of insertion - this should always be a selector followed by an OpenBrace and then nested selectors (if the
-		/// content is LESS) or style properties. If the selector only targets bare elements (ie. html tags with no id, class or attribute selector) then no marker
-		/// should be inserted. The CSSParser is used to identify the selector content (so that any comments can be dismissed) which may seem potentially expensive
-		/// for the job in hand, but the amount of content passed in here should be short in most cases (since it should be a selector set). The costs savings for
-		/// the InjectedIdTidyingTextFileLoader may be significant as well, if the content has deeply nested selectors and wraps every file in a html tag to
-		/// limit the scope of any values or mixins (this only applies to LESS content).
+		/// If an optionalSelectorMarkerInsertionCondition has been specified, then pass it the selector content from the point at which a marker insertion is
+		/// possible (an optionalSelectorMarkerInsertionCondition may be passed in that prevents markers from being insert into scope-restricting html selectors
+		/// in order to reduce the nesting of marker ids, for example)
 		/// </summary>
 		private bool IsAcceptableToInsertHere(string styleContentAtInsertionPoint)
 		{
 			if (styleContentAtInsertionPoint == null)
 				throw new ArgumentNullException("styleContentAtInsertionPoint");
 
-			var selector = string.Join(
-				"",
-				Parser.ParseLESS(styleContentAtInsertionPoint)
-					.TakeWhile(c => c.CharacterCategorisation != CharacterCategorisationOptions.OpenBrace)
-					.Where(c => c.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
-					.Select(c => c.Value)
+			if (_optionalSelectorMarkerInsertionCondition == null)
+				return true;
+
+			return _optionalSelectorMarkerInsertionCondition(
+				string.Join(
+					"",
+					Parser.ParseLESS(styleContentAtInsertionPoint)
+						.TakeWhile(c => c.CharacterCategorisation != CharacterCategorisationOptions.OpenBrace)
+						.Where(c => c.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
+						.Select(c => c.Value)
+				)
 			);
-			if (_markerInsertionBehaviour == MarkerInsertionBehaviourOptions.NotBeforeIsolatedBareElementSelectors)
-			{
-				// If NotBeforeIsolatedBareElementSelectors is specified but a selector separator is present then the condition has not been met (the are multiple
-				// selectors, this is not an "isolated" selector). I'm taking a slight liberty here by ignoring whitespace, feasibly "h2 a" could be considered to
-				// be a non-isolated selector as it has two segments, but since it would only be a single selector I'm happy enough to consider an isolated bare
-				// selector (so long as it doesn't have any of the characters that are checked for further down).
-				if (selector.IndexOfAny(new[] { ',' }) != -1)
-					return false;
-			}
-			return selector.IndexOfAny(new[] { '.', '#', ':', '[', '>' }) != -1;
 		}
 
 		private interface IAnalyseCharacters
