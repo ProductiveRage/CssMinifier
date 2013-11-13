@@ -261,11 +261,6 @@
             This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
             </summary>
         </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
-            <summary>
-            This will never be null
-            </summary>
-        </member>
         <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
             This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
@@ -301,6 +296,11 @@
             </summary>
         </member>
         <member name="P:CSSParser.ContentProcessors.CharacterProcessors.ISegment.Content">
+            <summary>
+            This will never be null
+            </summary>
+        </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
             <summary>
             This will never be null
             </summary>
