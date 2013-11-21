@@ -22,16 +22,10 @@ namespace CSSMinifier
 			routes.RouteExistingFiles = true; // Have to set this to true so that stylesheets get processed rather than returned direct
 
 			routes.MapRoute(
-				"StandardStylesheets",
+				"Stylesheets",
 				"{*allwithextension}",
 				new { controller = "CSS", action = "Process" },
-				new { allwithextension = @".*\.css(/.*)?" }
-			);
-			routes.MapRoute(
-				"LessCssStylesheets",
-				"{*allwithextension}",
-				new { controller = "CSS", action = "Process" },
-				new { allwithextension = @".*\.less(/.*)?" }
+				new { allwithextension = @".*\.(css|less)(/.*)?" }
 			);
 
 			routes.MapRoute(
