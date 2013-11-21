@@ -51,7 +51,6 @@
     <None Include="Content\Resets.less" />
     <None Include="Content\Site-VerticalLayout.less" />
     <Compile Include="Common\NonExpiringASPNetCacheCache.cs" />
-    <Compile Include="Common\ServerUtilityPathMapper.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\CSSController.cs" />
     <Compile Include="Global.asax.cs">

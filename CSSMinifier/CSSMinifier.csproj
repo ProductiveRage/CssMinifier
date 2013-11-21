@@ -43,6 +43,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Caching\LayeredCache.cs" />
@@ -55,6 +56,7 @@
     <Compile Include="FileLoaders\Factories\DefaultNonCachedLessCssLoaderFactory.cs" />
     <Compile Include="FileLoaders\ErrorBehaviourOptions.cs" />
     <Compile Include="FileLoaders\Factories\IGenerateCssLoaders.cs" />
+    <Compile Include="FileLoaders\Factories\SourceMappingMarkerInjectionOptions.cs" />
     <Compile Include="FileLoaders\Helpers\SourceMappingMarkerIdGenerator.cs" />
     <Compile Include="FileLoaders\LessCssOpeningHtmlTagRenamer.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
@@ -73,6 +75,7 @@
     <Compile Include="Logging\ILogEvents_Extensions.cs" />
     <Compile Include="Logging\LogLevel.cs" />
     <Compile Include="PathMapping\IRelativePathMapper.cs" />
+    <Compile Include="PathMapping\ServerUtilityPathMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileLoaders\TextFileContents.cs" />
   </ItemGroup>

@@ -18,9 +18,8 @@ namespace CSSMinifierDemo.Controllers
 	{
 		public ActionResult Process()
 		{
-			var relativePathMapper = new ServerUtilityPathMapper(Server);
 			var relativePath = Request.FilePath;
-			var fullPath = relativePathMapper.MapPath(relativePath);
+			var fullPath = Server.MapPath(relativePath);
 			var file = new FileInfo(fullPath);
 			if (!file.Exists)
 			{
@@ -33,7 +32,6 @@ namespace CSSMinifierDemo.Controllers
 			{
 				return Process(
 					relativePath,
-					relativePathMapper,
 					new NonExpiringASPNetCacheCache(HttpContext.Cache),
 					TryToGetIfModifiedSinceDateFromRequest()
 				);
@@ -42,11 +40,7 @@ namespace CSSMinifierDemo.Controllers
 			{
 				Response.StatusCode = 500;
 				Response.StatusDescription = "Internal Server Error";
-#if DEBUG
-				return Content("Error: " + e.StackTrace);
-#else
 				return Content("Error: " + e.Message);
-#endif
 			}
 		}
 
@@ -61,7 +55,6 @@ namespace CSSMinifierDemo.Controllers
 		/// </summary>
 		private ActionResult Process(
 			string relativePath,
-			IRelativePathMapper relativePathMapper,
 			ICacheThingsWithModifiedDates<TextFileContents> memoryCache,
 			DateTime? lastModifiedDateFromRequest)
 		{
@@ -69,13 +62,11 @@ namespace CSSMinifierDemo.Controllers
 				throw new ArgumentException("Null/blank relativePath specified");
 			if (memoryCache == null)
 				throw new ArgumentNullException("memoryCache");
-			if (relativePathMapper == null)
-				throw new ArgumentNullException("relativePathMapper");
 
 			// Using the SingleFolderLastModifiedDateRetriever means that we can determine whether cached content (either in the ASP.Net cache or in the browser cache)
 			// is up to date without having to perform the complete import flattening process. It may lead to some unnecessary work if an unrelated file in the folder
 			// is updated but for the most common cases it should be an efficient approach.
-			var lastModifiedDateRetriever = new SingleFolderLastModifiedDateRetriever(relativePathMapper, new[] { "css", "less" });
+			var lastModifiedDateRetriever = new SingleFolderLastModifiedDateRetriever(new ServerUtilityPathMapper(Server), new[] { "css", "less" });
 			var lastModifiedDate = lastModifiedDateRetriever.GetLastModifiedDate(relativePath);
 			if ((lastModifiedDateFromRequest != null) && AreDatesApproximatelyEqual(lastModifiedDateFromRequest.Value, lastModifiedDate))
 			{
@@ -87,23 +78,17 @@ namespace CSSMinifierDemo.Controllers
 			// In the interests of compatability with this generic example project, we'll use the DefaultNonCachedLessCssLoaderFactory which will enable LESS compilation,
 			// import-flattening and minification but doesn't support the advanced features that the EnhancedNonCachedLessCssLoaderFactory enables such as psuedo-source-
 			// mapping, media-query-grouping and others (see comments in the EnhancedNonCachedLessCssLoaderFactory for more information)
-			var errorBehaviour = ErrorBehaviourOptions.LogAndContinue;
-			var logger = new NullLogger();
-			var cssLoader = (new DefaultNonCachedLessCssLoaderFactory(
-				relativePathMapper,
-				errorBehaviour,
-				logger
-			)).Get();
+			var cssLoader = (new DefaultNonCachedLessCssLoaderFactory(Server)).Get();
 			
 			// Layers of caching are added to persist the processed content in memory and on disk (last-modified-date checking is incorporated so that cache entries are
 			// expired if the source files have changed since the cached data was stored)
 			var diskCachingCssLoader = new DiskCachingTextFileLoader(
 				cssLoader,
-				relativePathRequested => new FileInfo(relativePathMapper.MapPath(relativePathRequested) + ".cache"),
+				relativePathRequested => new FileInfo(Server.MapPath(relativePathRequested) + ".cache"),
 				lastModifiedDateRetriever,
 				DiskCachingTextFileLoader.InvalidContentBehaviourOptions.Delete,
-				errorBehaviour,
-				logger
+				ErrorBehaviourOptions.LogAndRaiseException,
+				new NullLogger()
 			);
 			var memoryAndDiskCachingCssLoader = new CachingTextFileLoader(
 				diskCachingCssLoader,

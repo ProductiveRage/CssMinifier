@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Web;
-using CSSMinifier.PathMapping;
 
-namespace CSSMinifierDemo.Common
+namespace CSSMinifier.PathMapping
 {
-	/// <summary>
-	/// This will throw an exception for null or empty input, it will never return null
-	/// </summary>
 	public class ServerUtilityPathMapper : IRelativePathMapper
 	{
 		private HttpServerUtilityBase _server;
@@ -18,6 +14,9 @@ namespace CSSMinifierDemo.Common
 			_server = server;
 		}
 
+		/// <summary>
+		/// This will throw an exception for null or empty input, it will never return null
+		/// </summary>
 		public string MapPath(string relativePath)
 		{
 			if (string.IsNullOrWhiteSpace(relativePath))
