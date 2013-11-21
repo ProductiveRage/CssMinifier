@@ -2,6 +2,7 @@
 using CSSMinifier.FileLoaders.Helpers;
 using CSSMinifier.Logging;
 using CSSMinifier.PathMapping;
+using System.Web;
 
 namespace CSSMinifier.FileLoaders.Factories
 {
@@ -17,23 +18,39 @@ namespace CSSMinifier.FileLoaders.Factories
 	public class EnhancedNonCachedLessCssLoaderFactory : IGenerateCssLoaders
 	{
 		private readonly ITextFileLoader _contentLoader;
+		private readonly SourceMappingMarkerInjectionOptions _sourceMappingMarkerInjection;
 		private readonly ErrorBehaviourOptions _errorBehaviour;
 		private readonly ILogEvents _logger;
-		public EnhancedNonCachedLessCssLoaderFactory(ITextFileLoader contentLoader, ErrorBehaviourOptions errorBehaviour, ILogEvents logger)
+		public EnhancedNonCachedLessCssLoaderFactory(
+			ITextFileLoader contentLoader,
+			SourceMappingMarkerInjectionOptions sourceMappingMarkerInjection,
+			ErrorBehaviourOptions errorBehaviour,
+			ILogEvents logger)
 		{
 			if (contentLoader == null)
 				throw new ArgumentNullException("contentLoader");
+			if (!Enum.IsDefined(typeof(SourceMappingMarkerInjectionOptions), sourceMappingMarkerInjection))
+				throw new ArgumentOutOfRangeException("sourceMappingMarkerInjection");
 			if (!Enum.IsDefined(typeof(ErrorBehaviourOptions), errorBehaviour))
 				throw new ArgumentOutOfRangeException("lineNumberInjectionBehaviour");
 			if (logger == null)
 				throw new ArgumentNullException("logger");
 
 			_contentLoader = contentLoader;
+			_sourceMappingMarkerInjection = sourceMappingMarkerInjection;
 			_errorBehaviour = errorBehaviour;
 			_logger = logger;
 		}
-		public EnhancedNonCachedLessCssLoaderFactory(IRelativePathMapper pathMapper, ErrorBehaviourOptions errorBehaviour, ILogEvents logger)
-			: this(new SimpleTextFileContentLoader(pathMapper), errorBehaviour, logger) { }
+		public EnhancedNonCachedLessCssLoaderFactory(
+			IRelativePathMapper pathMapper,
+			SourceMappingMarkerInjectionOptions sourceMappingMarkerInjection,
+			ErrorBehaviourOptions errorBehaviour,
+			ILogEvents logger)
+			: this(new SimpleTextFileContentLoader(pathMapper), sourceMappingMarkerInjection, errorBehaviour, logger) { }
+		public EnhancedNonCachedLessCssLoaderFactory(IRelativePathMapper pathMapper)
+			: this(new SimpleTextFileContentLoader(pathMapper), SourceMappingMarkerInjectionOptions.Inject, ErrorBehaviourOptions.LogAndRaiseException, new NullLogger()) { }
+		public EnhancedNonCachedLessCssLoaderFactory(HttpServerUtilityBase server)
+			: this(new ServerUtilityPathMapper(server)) { }
 
 		/// <summary>
 		/// This will never return null, it will raise an exception if unable to satisfy the request
@@ -41,21 +58,26 @@ namespace CSSMinifier.FileLoaders.Factories
 		public ITextFileLoader Get()
 		{
 			var scopingHtmlTagReplaceString = "REPLACEME";
+			ITextFileLoader singleFileLoader = new LessCssOpeningHtmlTagRenamer(
+				_contentLoader,
+				scopingHtmlTagReplaceString
+			);
 			var sourceMappingMarkerIdGenerator = new SourceMappingMarkerIdGenerator();
+			if (_sourceMappingMarkerInjection == SourceMappingMarkerInjectionOptions.Inject)
+			{
+				singleFileLoader = new LessCssLineNumberingTextFileLoader(
+					new LessCssCommentRemovingTextFileLoader(_contentLoader),
+					sourceMappingMarkerIdGenerator.MarkerGenerator,
+					selector => selector != scopingHtmlTagReplaceString // Don't insert marker ids on wrapper selectors that will be removed
+				);
+			}
 			return new MediaQueryGroupingCssLoader(
 				new DotLessCssCssLoader(
 					new SameFolderImportFlatteningCssLoader(
-						new LessCssLineNumberingTextFileLoader(
-							new LessCssCommentRemovingTextFileLoader(
-								new LessCssOpeningHtmlTagRenamer(
-									_contentLoader,
-									scopingHtmlTagReplaceString
-								)
-							),
-							sourceMappingMarkerIdGenerator.MarkerGenerator,
-							selector => selector != scopingHtmlTagReplaceString // Don't insert marker ids on wrapper selectors that will be removed
-						),
-						SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved,
+						singleFileLoader,
+					_sourceMappingMarkerInjection == SourceMappingMarkerInjectionOptions.Inject
+						? SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.CommentsAreAlreadyRemoved
+						: SameFolderImportFlatteningCssLoader.ContentLoaderCommentRemovalBehaviourOptions.ContentIsUnprocessed,
 						_errorBehaviour,
 						_errorBehaviour,
 						_logger
