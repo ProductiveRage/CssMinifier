@@ -17,7 +17,9 @@ The classes here are intended to enable the easy construction of ASP.Net MVC sty
 
 accessed by the following routes -
 
-    routes.RouteExistingFiles = true; // Have to set this to true so that stylesheets get processed rather than returned direct
+    // Have to set this to true so that stylesheets get processed rather get
+    // processed rather than returned direct as static files
+    routes.RouteExistingFiles = true;
     routes.MapRoute(
         "Stylesheets",
         "{*allwithextension}",
@@ -48,7 +50,7 @@ will result in the following selector
 
 In lieu of the kind of a full cross-browser source mapping solution for compiled / minified stylesheets, this can act as a way to track the compiled output back to source (so long as you consider the overhead of the additional markup a reasonable trade-off).
 
-Note that the **DefaultNonCachedLessCssLoaderFactory** as instantiated above will enable this functionality by default. It has alternate constructor signatures if you want to tweak its behaviour.
+*Note that the **DefaultNonCachedLessCssLoaderFactory** as instantiated above will enable this functionality by default. It has alternate constructor signatures if you want to tweak its behaviour.*
 
 The **MediaQueryGroupingCssLoader** will take all style blocks that are wrapped in media queries and move them below the non-media-query-wrapped content, but any media query blocks with the same criteria will be combined. This can improve performance on some devices, specifically mobiles, at the cost of manipulation of the content - if the ordering of your styles is significant then this could cause problems! (If this is the case then I recommend a look at my blog post [Non-cascading CSS](http://www.productiverage.com/Read/42)! :)
 
@@ -71,7 +73,7 @@ But use of **LessCssOpeningHtmlTagRenamer** and **DotLessCssCSSLoader** can allo
 
     div.header{color:#4D926F}
 
-*The **DotLessCssCSSLoader** will compile LESS content into vanilla CSS but also has a few additional tricks up its sleeves, one of them is to remove particular tags from selectors, such as in this case. The **LessCssOpeningHtmlTagRenamer** will identify those scope-identifying tags and rename them with "REMOVEME", the **DotLessCssCSSLoader** will then be configured to remove any instances of "REMOVEME" from any generated selectors).*
+*The **DotLessCssCSSLoader**'s primary purpose is to compile LESS content into vanilla CSS but it also has a few additional tricks up its sleeves. One of them is to remove particular tags from selectors, such as in this case. The **LessCssOpeningHtmlTagRenamer** will identify those scope-identifying tags and rename them with "REMOVEME", the **DotLessCssCSSLoader** will then be configured to remove any instances of "REMOVEME" from any generated selectors).*
 
 All of these "advanced options" are enabled if the **EnhancedNonCachedLessCssLoaderFactory** is used instead of the **DefaultNonCachedLessCssLoaderFactory** in the first example. The most straight-forward instantiation from within a Controller is the same:
 
