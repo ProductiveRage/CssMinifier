@@ -26,8 +26,6 @@ namespace CSSMinifier.FileLoaders
 				throw new ArgumentNullException("fileLoader");
 			if (markerGenerator == null)
 				throw new ArgumentNullException("markerGenerator");
-			if (optionalSelectorMarkerInsertionCondition == null)
-				throw new ArgumentNullException("optionalSelectorMarkerInsertionCondition");
 
 			_fileLoader = fileLoader;
 			_markerGenerator = markerGenerator;
