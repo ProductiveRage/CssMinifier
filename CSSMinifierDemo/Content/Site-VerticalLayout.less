@@ -1,5 +1,6 @@
-﻿body div.Header { width: 100%; }
-
+﻿/* These selectors have the "body" element in them so that they override the selectors in Site.less by virtue of being considered more specific
+ by the browser - eg. "body div.HeaderContent" is considered more specified than "div.HeaderContent" and so, although the styles in Site.less
+ appear after the styles here in the final output (since Site.less includes this file at its start), the styles here will take precedence */
 body div.HeaderContent
 {
   width: auto;
