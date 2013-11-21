@@ -98,8 +98,8 @@ namespace CSSMinifier.FileLoaders
 			private readonly string _optionalTagNameToRemove;
 			public SelectorRewriterVisitorPluginConfigurator(InsertedMarkerRetriever markerIdRetriever, string optionalTagNameToRemove)
             {
-				if (optionalTagNameToRemove == null)
-					throw new ArgumentNullException("optionalTagNameToRemove");
+				if (markerIdRetriever == null)
+					throw new ArgumentNullException("markerIdRetriever");
 
                 _markerIdRetriever = markerIdRetriever;
 				_optionalTagNameToRemove = optionalTagNameToRemove;
