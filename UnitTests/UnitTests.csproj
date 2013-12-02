@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\FixedListCssContentLoader.cs" />
+    <Compile Include="DotLessCssCssLoaderTests.cs" />
     <Compile Include="DiskCachingTextFileLoaderTests.cs" />
     <Compile Include="InjectedIdTidyingTextFileLoaderTests.cs" />
     <Compile Include="LessCssCommentRemovingTextFileLoader.cs.cs" />
