@@ -239,88 +239,73 @@ namespace CSSMinifier.FileLoaders
 					throw new ArgumentNullException("paths");
 
 				var markerIds = new HashSet<string>(_markerIdRetriever());
+				var longestMarkerId = markerIds.Any() ? markerIds.Max(id => id.Length) : 0;
 				var returnedMarkerIdSelectors = new HashSet<string>();
 				foreach (var path in paths)
 				{
-					// IsMarkerId indicates that a selector segment is a complete match with a marker id (eg. "test1.css_12"), ContainsMarkerId indicates that
-					// a selector segment is a partial match (eg. "test1.css_12:hover") which most likely means that it was the result of an injected marker
-					// being combined with a parent selector (eg. "&:hover")
-					var pathSegmentMarkerIdStates = path
+					// If there are any markers then we need to loop through the selector content and check whether any of them contain marker ids.
+					// Since these marker ids may be built up of multiple elements (eg. "#test1.css_123" will consist of "#test1" and ".css_123")
+					// we'll need to look through runs of elements to see if any of them match any markers. If any markers are encountered, then
+					// the selector may remain in the final content only if the marker id is the very last content in the selector (in which case
+					// a selector containing ONLY the marker id content will be returned). If marker content is encountered anywhere but at the
+					// end of a selector then the selector is ignore (eg. "#test1.css_1 h2" is not sufficiently specific, if "#test1.css_1" was
+					// an injected marker then it must have been injected a level about the h2 such as "#test1.css_1 .content { #test.css_2 h2 {",
+					// in which case we would want to also ignore the resulting "#test1.css_1 #test1.css_2" and ".content #test1.css_2" but KEEP
+					// the ".content h2" selector, since that is a real selector, and ".content #test.css_2", since that is the most specific
+					// marker id to accompany the real selector - though it should be trimmed down to just "#test.css_2").
+					if (longestMarkerId > 0)
+					{
+						IEnumerable<Element> markerIdContentIfAny = null;
+						var ignorePath = false;
+						foreach (var selector in path)
+						{
+							for (var index = 0; index < selector.Elements.Count; index++)
+							{
+								var combinedElementContentBuilder = new StringBuilder();
+								for (var numberOfAdditionalElements = 0; (index + numberOfAdditionalElements) < selector.Elements.Count; numberOfAdditionalElements++)
+								{
+									combinedElementContentBuilder.Append(selector.Elements[index + numberOfAdditionalElements].Value);
+									if (combinedElementContentBuilder.Length > longestMarkerId)
+										break;
+									if (markerIds.Contains(combinedElementContentBuilder.ToString()))
+									{
+										markerIdContentIfAny = selector.Elements.Skip(index).Take(1 + numberOfAdditionalElements);
+										var isLastValueInSelector = (index + numberOfAdditionalElements) == (selector.Elements.Count - 1);
+										ignorePath = !isLastValueInSelector;
+										break;
+									}
+								}
+								if (markerIdContentIfAny != null)
+									break;
+							}
+							if (markerIdContentIfAny != null)
+								break;
+						}
+						if (markerIdContentIfAny != null)
+						{
+							if (!ignorePath)
+								yield return new[] { new Selector(markerIdContentIfAny) };
+							continue;
+						}
+					}
+
+					// If there isn't any "optionalTagNameToRemove" value then there's no more processing to do, return the content directly
+					if (_optionalTagNameToRemove == null)
+					{
+						yield return path;
+						continue;
+					}
+
+					// If there WAS an "optionalTagNameToRemove" value specified then exclude any elements from the selector that match this value
+					var segmentsWithoutTagNameToRemove = path
 						.Select(s =>
 						{
-							var combinedElementValue = string.Join("", s.Elements.Select(e => e.Value));
-							var isMarkerId = markerIds.Contains(combinedElementValue);
-							return new
-							{
-								Selector = s,
-								CombinedElementValue = combinedElementValue,
-								ContainsMarkerId = GetCombinedElementValues(s.Elements).Any(v => markerIds.Contains(v)),
-								IsMarkerId = isMarkerId
-							};
-						});
-
-					// Ignore any selectors with partial marker id segments (we're interested in selectors with zero marker id content since these are "real
-					// selectors" from the source and we're interested in selectors where the last segment is a marker id and no others are, since this will
-					// be the most specific marker id for the rules, but if there is a partial marker id match then a parent selector has affected and there
-					// should be a marker id with that parent selector that will be more specific and should be used in preference)
-					if (pathSegmentMarkerIdStates.Any(s => s.ContainsMarkerId && !s.IsMarkerId))
-						continue;
-
-					// If there are no marker ids in the selector then this is a "real selector" and hasn't been polluted by marker ids at all
-					var numberOfMarkerIds = pathSegmentMarkerIdStates.Count(s => s.IsMarkerId || s.ContainsMarkerId);
-					if (numberOfMarkerIds == 0)
-					{
-						if (_optionalTagNameToRemove == null)
-							yield return path;
-						else
-						{
-							// If there was an "optionalTagNameToRemove" value specified then exclude any elements from the selector that match this value
-							var segmentsWithoutTagNameToRemove = path
-								.Select(s =>
-								{
-									var elementsToKeep = s.Elements.Where(e => e.Value != _optionalTagNameToRemove);
-									return elementsToKeep.Any() ? new Selector(elementsToKeep) : null;
-								})
-								.Where(s => s != null);
-							if (segmentsWithoutTagNameToRemove.Any())
-								yield return segmentsWithoutTagNameToRemove;
-						}
-						continue;
-					}
-
-					// If there are multiple marker ids, then we're not interested - we only want to keep the single most-specific marker id selector,
-					// this should be a selector where the last segment is a marker id
-					if (numberOfMarkerIds == 1)
-					{
-						var lastSegment = pathSegmentMarkerIdStates.Last();
-						if (lastSegment.IsMarkerId)
-						{
-							if (!returnedMarkerIdSelectors.Contains(lastSegment.CombinedElementValue))
-							{
-								yield return new[] { lastSegment.Selector };
-								returnedMarkerIdSelectors.Add(lastSegment.CombinedElementValue);
-							}
-						}
-					}
-				}
-			}
-
-			private IEnumerable<string> GetCombinedElementValues(IEnumerable<Element> elements)
-			{
-				if (elements == null)
-					throw new ArgumentNullException("elements");
-				if (elements.Any(e => e == null))
-					throw new ArgumentException("Null reference encountered in element set");
-
-				var elementsArray = elements.ToArray();
-				for (var index = 0; index < elementsArray.Length; index++)
-				{
-					var combinedValue = new StringBuilder();
-					for (var indexInner = index; indexInner < elementsArray.Length; indexInner++)
-					{
-						combinedValue.Append(elementsArray[indexInner].Value);
-						yield return combinedValue.ToString();
-					}
+							var elementsToKeep = s.Elements.Where(e => e.Value != _optionalTagNameToRemove);
+							return elementsToKeep.Any() ? new Selector(elementsToKeep) : null;
+						})
+						.Where(s => s != null);
+					if (segmentsWithoutTagNameToRemove.Any())
+						yield return segmentsWithoutTagNameToRemove;
 				}
 			}
 		}
