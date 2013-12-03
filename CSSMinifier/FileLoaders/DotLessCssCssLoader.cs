@@ -83,8 +83,9 @@ namespace CSSMinifier.FileLoaders
 				true, // Compress
 				false // Debug
 			);
+			var markerIdLookup = new MarkerIdLookup(_markerIdRetriever());
 			engine.Plugins = new[] { 
-                new SelectorRewriterVisitorPluginConfigurator(_markerIdRetriever, _optionalTagNameToRemove)
+                new SelectorRewriterVisitorPluginConfigurator(markerIdLookup, _optionalTagNameToRemove)
             };
 			return new TextFileContents(
 				initialFileContents.RelativePath,
@@ -95,18 +96,18 @@ namespace CSSMinifier.FileLoaders
 
 		private class SelectorRewriterVisitorPluginConfigurator : IPluginConfigurator
 		{
-			private readonly InsertedMarkerRetriever _markerIdRetriever;
+			private readonly MarkerIdLookup _markerIdLookup;
 			private readonly string _optionalTagNameToRemove;
-			public SelectorRewriterVisitorPluginConfigurator(InsertedMarkerRetriever markerIdRetriever, string optionalTagNameToRemove)
+			public SelectorRewriterVisitorPluginConfigurator(MarkerIdLookup markerIdLookup, string optionalTagNameToRemove)
 			{
-				if (markerIdRetriever == null)
-					throw new ArgumentNullException("markerIdRetriever");
+				if (markerIdLookup == null)
+					throw new ArgumentNullException("markerIdLookup");
 
-				_markerIdRetriever = markerIdRetriever;
+				_markerIdLookup = markerIdLookup;
 				_optionalTagNameToRemove = optionalTagNameToRemove;
 			}
 
-			public IPlugin CreatePlugin() { return new SelectorRewriterVisitorPlugin(_markerIdRetriever, _optionalTagNameToRemove); }
+			public IPlugin CreatePlugin() { return new SelectorRewriterVisitorPlugin(_markerIdLookup, _optionalTagNameToRemove); }
 			public IEnumerable<IPluginParameter> GetParameters() { return new IPluginParameter[0]; }
 			public void SetParameterValues(IEnumerable<IPluginParameter> parameters) { }
 			public string Name { get { return "SelectorRewriterVisitorPluginConfigurator"; } }
@@ -122,14 +123,14 @@ namespace CSSMinifier.FileLoaders
 		/// </summary>
 		private class SelectorRewriterVisitorPlugin : VisitorPlugin
 		{
-			private readonly InsertedMarkerRetriever _markerIdRetriever;
+			private readonly MarkerIdLookup _markerIdLookup;
 			private readonly string _optionalTagNameToRemove;
-			public SelectorRewriterVisitorPlugin(InsertedMarkerRetriever markerIdRetriever, string optionalTagNameToRemove)
+			public SelectorRewriterVisitorPlugin(MarkerIdLookup markerIdLookup, string optionalTagNameToRemove)
 			{
-				if (markerIdRetriever == null)
-					throw new ArgumentNullException("markerIdRetriever");
+				if (markerIdLookup == null)
+					throw new ArgumentNullException("markerIdLookup");
 
-				_markerIdRetriever = markerIdRetriever;
+				_markerIdLookup = markerIdLookup;
 				_optionalTagNameToRemove = optionalTagNameToRemove;
 			}
 
@@ -145,7 +146,7 @@ namespace CSSMinifier.FileLoaders
 				{
 					var ruleset = (Ruleset)node;
 					if (ruleset != null)
-						return new MarkerIdTidyingRuleset(ruleset.Selectors, ruleset.Rules, _markerIdRetriever, _optionalTagNameToRemove) { Location = ruleset.Location };
+						return new MarkerIdTidyingRuleset(ruleset.Selectors, ruleset.Rules, _markerIdLookup, _optionalTagNameToRemove) { Location = ruleset.Location };
 				}
 				return node;
 			}
@@ -156,15 +157,15 @@ namespace CSSMinifier.FileLoaders
 		/// </summary>
 		private class MarkerIdTidyingRuleset : Ruleset
 		{
-			private readonly InsertedMarkerRetriever _markerIdRetriever;
+			private readonly MarkerIdLookup _markerIdLookup;
 			private readonly string _optionalTagNameToRemove;
-			public MarkerIdTidyingRuleset(NodeList<Selector> selectors, NodeList rules, InsertedMarkerRetriever markerIdRetriever, string optionalTagNameToRemove)
+			public MarkerIdTidyingRuleset(NodeList<Selector> selectors, NodeList rules, MarkerIdLookup markerIdLookup, string optionalTagNameToRemove)
 				: base(selectors, rules)
 			{
-				if (markerIdRetriever == null)
-					throw new ArgumentNullException("markerIdRetriever");
+				if (markerIdLookup == null)
+					throw new ArgumentNullException("markerIdLookup");
 
-				_markerIdRetriever = markerIdRetriever;
+				_markerIdLookup = markerIdLookup;
 				_optionalTagNameToRemove = optionalTagNameToRemove;
 			}
 
@@ -212,7 +213,7 @@ namespace CSSMinifier.FileLoaders
 
 				var rulesetOutput = env.Output.Pop();
 
-				var pathsToInclude = FilterPaths(paths);
+				var pathsToInclude = FilterPaths(paths, _markerIdLookup);
 				if (!IsRoot && pathsToInclude.Any())
 				{
 					if (nonCommentRules > 0)
@@ -234,12 +235,14 @@ namespace CSSMinifier.FileLoaders
 				env.Output.Append(rulesetOutput);
 			}
 
-			private IEnumerable<IEnumerable<Selector>> FilterPaths(IEnumerable<IEnumerable<Selector>> paths)
+			private IEnumerable<IEnumerable<Selector>> FilterPaths(IEnumerable<IEnumerable<Selector>> paths, MarkerIdLookup markerIdLookup)
 			{
 				if (paths == null)
 					throw new ArgumentNullException("paths");
+				if (markerIdLookup == null)
+					throw new ArgumentNullException("markerIdLookup");
 
-				var currentElementContent = new CombinedElementContent(_markerIdRetriever());
+				var currentElementContent = new CombinedElementContent(markerIdLookup);
 
 				var markerIdsAccountedFor = new HashSet<string>();
 				var combinedPaths = new List<Selector>();
@@ -334,21 +337,16 @@ namespace CSSMinifier.FileLoaders
 
 			private class CombinedElementContent : IEnumerable<Element>
 			{
-				private readonly HashSet<string> _markerIds;
-				private readonly int _greatestMarkerIdLength;
-
+				private readonly MarkerIdLookup _markerIdLookup;
 				private readonly List<Element> _elements;
 				private readonly StringBuilder _stringContentBuilder;
 				private bool _contentIsTooLongToBeMarkerId;
-	
-				public CombinedElementContent(IEnumerable<string> markerIds)
+				public CombinedElementContent(MarkerIdLookup markerIdLookup)
 				{
-					if (markerIds == null)
-						throw new ArgumentNullException("markerIds");
+					if (markerIdLookup == null)
+						throw new ArgumentNullException("markerIdLookup");
 
-					_markerIds = new HashSet<string>(markerIds);
-					_greatestMarkerIdLength = _markerIds.Any() ? markerIds.Max(id => (id == null) ? 0 : id.Length) : 0;
-
+					_markerIdLookup = markerIdLookup;
 					_elements = new List<Element>();
 					_stringContentBuilder = new StringBuilder();
 					_contentIsTooLongToBeMarkerId = false;
@@ -383,7 +381,7 @@ namespace CSSMinifier.FileLoaders
 						return null;
 
 					var stringContent = _stringContentBuilder.ToString();
-					return _markerIds.Contains(stringContent) ? stringContent : null;
+					return _markerIdLookup.Contains(stringContent) ? stringContent : null;
 				}
 
 				public IEnumerator<Element> GetEnumerator()
@@ -395,6 +393,27 @@ namespace CSSMinifier.FileLoaders
 					return GetEnumerator();
 				}
 			}
+		}
+
+		private class MarkerIdLookup
+		{
+			private readonly HashSet<string> _markerIds;
+			public MarkerIdLookup(IEnumerable<string> markerIds)
+			{
+				if (markerIds == null)
+					throw new ArgumentNullException("markerIds");
+
+				_markerIds = new HashSet<string>(markerIds);
+				GreatestMarkerIdLength = _markerIds.Any() ? markerIds.Max(id => (id == null) ? 0 : id.Length) : 0;
+			}
+
+			public bool Contains(string markerId)
+			{
+				if (markerId == null)
+					throw new ArgumentNullException("markerId");
+				return (markerId.Length <= GreatestMarkerIdLength) && _markerIds.Contains(markerId);
+			}
+			public int GreatestMarkerIdLength { get; private set; }
 		}
 
 		private class DotLessCssPassThroughLogger : ILogger
