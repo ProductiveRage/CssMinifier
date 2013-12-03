@@ -97,7 +97,9 @@ namespace CSSMinifier.FileLoaders
 				catch (Exception e)
 				{
 					_logger.LogIgnoringAnyError(LogLevel.Error, () => "DiskCachingTextFileLoader.Load: Error loading content - " + e.Message);
-					if ((e is InvalidCacheFileFormatException) && (_invalidContentBehaviour == InvalidContentBehaviourOptions.Delete))
+					if (e is InvalidCacheFileFormatException)
+					{
+						if (_invalidContentBehaviour == InvalidContentBehaviourOptions.Delete)
 						{
 							try
 							{
@@ -114,9 +116,12 @@ namespace CSSMinifier.FileLoaders
 									throw;
 							}
 						}
+					}
+					else
+					{
 						if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
 							throw;
-					return null;
+					}
 				}
 			}
 
