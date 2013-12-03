@@ -33,14 +33,14 @@ namespace UnitTests
 				"#test.css_1"
 			};
 			var content = "#test.css_1,.Woo{color:blue}";
-			var tidiedContentLoader = GetDefaultLoader(
+			var contentLoader = GetDefaultLoader(
 				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
 				insertedMarkers
 			);
 
 			Assert.Equal(
 				content, // We're expecting that the content not be altered
-				tidiedContentLoader.Load(filename).Content
+				contentLoader.Load(filename).Content
 			);
 		}
 
@@ -57,14 +57,14 @@ namespace UnitTests
 				"#test.css_1"
 			};
 			var content = "#test.css_1,.Woo :hover{color:blue}";
-			var tidiedContentLoader = GetDefaultLoader(
+			var contentLoader = GetDefaultLoader(
 				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
 				insertedMarkers
 			);
 
 			Assert.Equal(
 				content, // We're expecting that the content not be altered
-				tidiedContentLoader.Load(filename).Content
+				contentLoader.Load(filename).Content
 			);
 		}
 
@@ -89,14 +89,14 @@ namespace UnitTests
 				"#test.css_2"
 			};
 			var content = "#test.css_1 #test.css_2,#test.css_1 h2,.Woo #test.css_2,.Woo h2{font-weight:bold}";
-			var tidiedContentLoader = GetDefaultLoader(
+			var contentLoader = GetDefaultLoader(
 				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
 				insertedMarkers
 			);
 
 			Assert.Equal(
 				"#test.css_2,.Woo h2{font-weight:bold}",
-				tidiedContentLoader.Load(filename).Content
+				contentLoader.Load(filename).Content
 			);
 		}
 
@@ -114,14 +114,65 @@ namespace UnitTests
 				"#test.css_2"
 			};
 			var content = "#test.css_1 #test.css_2,#test.css_1>h2,.Woo #test.css_2,.Woo>h2{font-weight:bold}";
-			var tidiedContentLoader = GetDefaultLoader(
+			var contentLoader = GetDefaultLoader(
 				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
 				insertedMarkers
 			);
 
 			Assert.Equal(
 				"#test.css_2,.Woo>h2{font-weight:bold}",
-				tidiedContentLoader.Load(filename).Content
+				contentLoader.Load(filename).Content
+			);
+		}
+
+		[Fact]
+		public void ThreeDeepNestedSelectorOnlyKeepMostSpecificMarkerIds()
+		{
+			var filename = "test.css";
+			var insertedMarkers = new[]
+			{
+				"#test.css_1",
+				"#test.css_2",
+				"#test.css_3"
+			};
+			var content = "#test.css_1, .Wrapper { #test.css_2, h2, .Woo { #test.css_3, .Whatever { font-weight: bold; } } }";
+			var contentLoader = GetDefaultLoader(
+				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
+				insertedMarkers
+			);
+
+			Assert.Equal(
+				"#test.css_3," +
+				".Wrapper h2 .Whatever," +
+				".Wrapper .Woo .Whatever{font-weight:bold}",
+				contentLoader.Load(filename).Content
+			);
+		}
+
+		[Fact]
+		public void TwoAndThreeDeepNestedSelectorOnlyKeepMostSpecificMarkerIds()
+		{
+			var filename = "test.css";
+			var insertedMarkers = new[]
+			{
+				"#test.css_1",
+				"#test.css_2",
+				"#test.css_3"
+			};
+			var content = "#test.css_1, .Wrapper { #test.css_2, h2, .Woo { color: red; #test.css_3, .Whatever { font-weight: bold; } } }";
+			var contentLoader = GetDefaultLoader(
+				new TextFileContents(filename, new DateTime(2013, 2, 5, 18, 38, 0), content),
+				insertedMarkers
+			);
+
+			Assert.Equal(
+				"#test.css_2," +
+				".Wrapper h2," +
+				".Wrapper .Woo{color:red}" +
+				"#test.css_3," +
+				".Wrapper h2 .Whatever," +
+				".Wrapper .Woo .Whatever{font-weight:bold}",
+				contentLoader.Load(filename).Content
 			);
 		}
 

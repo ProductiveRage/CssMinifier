@@ -211,7 +211,7 @@ namespace CSSMinifier.FileLoaders
 
 				var rulesetOutput = env.Output.Pop();
 
-				var pathsToInclude = FilterPaths(paths).ToArray(); // TODO: Remove ToArray
+				var pathsToInclude = FilterPaths(paths);
 				if (!IsRoot && pathsToInclude.Any())
 				{
 					if (nonCommentRules > 0)
@@ -239,74 +239,96 @@ namespace CSSMinifier.FileLoaders
 					throw new ArgumentNullException("paths");
 
 				var markerIds = new HashSet<string>(_markerIdRetriever());
-				var longestMarkerId = markerIds.Any() ? markerIds.Max(id => id.Length) : 0;
 				var returnedMarkerIdSelectors = new HashSet<string>();
+
+				var markerIdsAccountedFor = new HashSet<string>();
+				var combinedPaths = new List<Selector>();
 				foreach (var path in paths)
 				{
-					// If there are any markers then we need to loop through the selector content and check whether any of them contain marker ids.
-					// Since these marker ids may be built up of multiple elements (eg. "#test1.css_123" will consist of "#test1" and ".css_123")
-					// we'll need to look through runs of elements to see if any of them match any markers. If any markers are encountered, then
-					// the selector may remain in the final content only if the marker id is the very last content in the selector (in which case
-					// a selector containing ONLY the marker id content will be returned). If marker content is encountered anywhere but at the
-					// end of a selector then the selector is ignore (eg. "#test1.css_1 h2" is not sufficiently specific, if "#test1.css_1" was
-					// an injected marker then it must have been injected a level about the h2 such as "#test1.css_1 .content { #test.css_2 h2 {",
-					// in which case we would want to also ignore the resulting "#test1.css_1 #test1.css_2" and ".content #test1.css_2" but KEEP
-					// the ".content h2" selector, since that is a real selector, and ".content #test.css_2", since that is the most specific
-					// marker id to accompany the real selector - though it should be trimmed down to just "#test.css_2").
-					if (longestMarkerId > 0)
+					if (path == null)
+						throw new ArgumentException("Null reference encountered in paths set");
+
+					var allElementInSelectorBuffer = new List<Element>();
+					var currentElementContent = new List<Element>();
+					Element[] markerIdElements = null;
+					var selectorShouldBeIgnored = false;
+					foreach (var selector in path)
 					{
-						IEnumerable<Element> markerIdContentIfAny = null;
-						var ignorePath = false;
-						foreach (var selector in path)
+						if (selector == null)
+							throw new ArgumentException("Null reference encountered in selector set in paths");
+
+						var isFirstElementInSelector = true;
+						foreach (var element in selector.Elements)
 						{
-							for (var index = 0; index < selector.Elements.Count; index++)
+							if (element == null)
+								throw new ArgumentException("Null element reference encountered within selector set in paths");
+
+							// The only time that a marker id should be present in a selector is if it's the last content (meaning that the current
+							// selector is the one that the marker id is most specific for). If we have already identified marker id content in the
+							// current selector and now we're encountering more content then this must be a selector to ignore (as the marker id
+							// content was not right at the end).
+							if (markerIdElements != null)
 							{
-								var combinedElementContentBuilder = new StringBuilder();
-								for (var numberOfAdditionalElements = 0; (index + numberOfAdditionalElements) < selector.Elements.Count; numberOfAdditionalElements++)
-								{
-									combinedElementContentBuilder.Append(selector.Elements[index + numberOfAdditionalElements].Value);
-									if (combinedElementContentBuilder.Length > longestMarkerId)
-										break;
-									if (markerIds.Contains(combinedElementContentBuilder.ToString()))
-									{
-										markerIdContentIfAny = selector.Elements.Skip(index).Take(1 + numberOfAdditionalElements);
-										var isLastValueInSelector = (index + numberOfAdditionalElements) == (selector.Elements.Count - 1);
-										ignorePath = !isLastValueInSelector;
-										break;
-									}
-								}
-								if (markerIdContentIfAny != null)
-									break;
-							}
-							if (markerIdContentIfAny != null)
+								selectorShouldBeIgnored = true;
 								break;
-						}
-						if (markerIdContentIfAny != null)
-						{
-							if (!ignorePath)
-								yield return new[] { new Selector(markerIdContentIfAny) };
-							continue;
-						}
-					}
+							}
 
-					// If there isn't any "optionalTagNameToRemove" value then there's no more processing to do, return the content directly
-					if (_optionalTagNameToRemove == null)
+							// We're potentially combining the elements from several distinct selectors into one long selector here, so ensure that
+							// when elements from different selectors are combined that the combinator between the end of one selector and the start
+							// of the next is always a space
+							Element elementToAdd;
+							if (isFirstElementInSelector && allElementInSelectorBuffer.Any())
+								elementToAdd = new Element(new Combinator(" "), element.Value);
+							else
+								elementToAdd = element;
+
+							// As we process the elements, we need to join up elements that form a single selector segment (eg. "#test1" and ".css_1")
+							// to see if together they form a marker id. As soon as a combinator with a space is encountered, this is reset as this
+							// indicates a new segment.
+							if (elementToAdd.Combinator.Value == " ")
+								currentElementContent.Clear();
+							currentElementContent.Add(element);
+
+							// Test whether the current selector segment is a marker id
+							var currentElementStringContent = string.Join("", currentElementContent.Select(e => e.ToCSS(new Env()))).Trim();
+							if (markerIds.Contains(currentElementStringContent))
+							{
+								if (markerIdsAccountedFor.Contains(currentElementStringContent))
+								{
+									selectorShouldBeIgnored = true;
+									break;
+								}
+								markerIdElements = currentElementContent.ToArray();
+								markerIdsAccountedFor.Add(currentElementStringContent);
+							}
+
+							// If we haven't determined that we've encountered a selector to skip yet then keep building up the combined set of elements
+							// for the current selector
+							allElementInSelectorBuffer.Add(elementToAdd);
+							isFirstElementInSelector = false;
+						}
+						if (selectorShouldBeIgnored)
+							break;
+					}
+					if (!selectorShouldBeIgnored)
 					{
-						yield return path;
-						continue;
-					}
-
-					// If there WAS an "optionalTagNameToRemove" value specified then exclude any elements from the selector that match this value
-					var segmentsWithoutTagNameToRemove = path
-						.Select(s =>
+						// If the selector is one that we've decided that we want, there's still potentially more work to do. If it's a selector that
+						// relates to a marker id, we need to ensure that we only include the marker id content (eg. if we have "div h2 #test1.css_12",
+						// the only important information is the marker "#test1.css_12"). There may be multiple selectors for the same marker id, we
+						// only want one of them to be included in the final output. If the selector does not relate to a marker id then we need to
+						// ensure that any elements that relate to the "optionalTagNameToRemove" (where non-null) are removed.
+						if (markerIdElements == null)
 						{
-							var elementsToKeep = s.Elements.Where(e => e.Value != _optionalTagNameToRemove);
-							return elementsToKeep.Any() ? new Selector(elementsToKeep) : null;
-						})
-						.Where(s => s != null);
-					if (segmentsWithoutTagNameToRemove.Any())
-						yield return segmentsWithoutTagNameToRemove;
+							if (_optionalTagNameToRemove == null)
+								combinedPaths.Add(new Selector(allElementInSelectorBuffer));
+							else
+								combinedPaths.Add(new Selector(allElementInSelectorBuffer.Where(e => e.Value != _optionalTagNameToRemove)));
+						}
+						else
+							combinedPaths.Add(new Selector(markerIdElements));
+					}
 				}
+				return combinedPaths.Select(selector => new[] { selector });
 			}
 		}
 
