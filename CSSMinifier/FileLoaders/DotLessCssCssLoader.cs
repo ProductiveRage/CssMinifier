@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -238,8 +239,7 @@ namespace CSSMinifier.FileLoaders
 				if (paths == null)
 					throw new ArgumentNullException("paths");
 
-				var markerIds = new HashSet<string>(_markerIdRetriever());
-				var returnedMarkerIdSelectors = new HashSet<string>();
+				var currentElementContent = new CombinedElementContent(_markerIdRetriever());
 
 				var markerIdsAccountedFor = new HashSet<string>();
 				var combinedPaths = new List<Selector>();
@@ -248,8 +248,9 @@ namespace CSSMinifier.FileLoaders
 					if (path == null)
 						throw new ArgumentException("Null reference encountered in paths set");
 
+					currentElementContent.Clear();
+
 					var allElementInSelectorBuffer = new List<Element>();
-					var currentElementContent = new List<Element>();
 					Element[] markerIdElements = null;
 					var selectorShouldBeIgnored = false;
 					foreach (var selector in path)
@@ -290,16 +291,16 @@ namespace CSSMinifier.FileLoaders
 							currentElementContent.Add(element);
 
 							// Test whether the current selector segment is a marker id
-							var currentElementStringContent = string.Join("", currentElementContent.Select(e => e.ToCSS(new Env()))).Trim();
-							if (markerIds.Contains(currentElementStringContent))
+							var markerId = currentElementContent.TryToGetAsMarkerId();
+							if (markerId != null)
 							{
-								if (markerIdsAccountedFor.Contains(currentElementStringContent))
+								if (markerIdsAccountedFor.Contains(markerId))
 								{
 									selectorShouldBeIgnored = true;
 									break;
 								}
 								markerIdElements = currentElementContent.ToArray();
-								markerIdsAccountedFor.Add(currentElementStringContent);
+								markerIdsAccountedFor.Add(markerId);
 							}
 
 							// If we haven't determined that we've encountered a selector to skip yet then keep building up the combined set of elements
@@ -329,6 +330,70 @@ namespace CSSMinifier.FileLoaders
 					}
 				}
 				return combinedPaths.Select(selector => new[] { selector });
+			}
+
+			private class CombinedElementContent : IEnumerable<Element>
+			{
+				private readonly HashSet<string> _markerIds;
+				private readonly int _greatestMarkerIdLength;
+
+				private readonly List<Element> _elements;
+				private readonly StringBuilder _stringContentBuilder;
+				private bool _contentIsTooLongToBeMarkerId;
+	
+				public CombinedElementContent(IEnumerable<string> markerIds)
+				{
+					if (markerIds == null)
+						throw new ArgumentNullException("markerIds");
+
+					_markerIds = new HashSet<string>(markerIds);
+					_greatestMarkerIdLength = _markerIds.Any() ? markerIds.Max(id => (id == null) ? 0 : id.Length) : 0;
+
+					_elements = new List<Element>();
+					_stringContentBuilder = new StringBuilder();
+					_contentIsTooLongToBeMarkerId = false;
+				}
+
+				public void Add(Element element)
+				{
+					if (element == null)
+						throw new ArgumentNullException("element");
+
+					_elements.Add(element);
+					if (!_contentIsTooLongToBeMarkerId)
+					{
+						var elementContent = element.ToCSS(new Env());
+						if (_stringContentBuilder.Length == 0)
+							elementContent = elementContent.Trim();
+						_stringContentBuilder.Append(elementContent);
+						if (_stringContentBuilder.Length > _greatestMarkerIdLength)
+							_contentIsTooLongToBeMarkerId = true;
+					}
+				}
+				public void Clear()
+				{
+					_elements.Clear();
+					_stringContentBuilder.Clear();
+					_contentIsTooLongToBeMarkerId = false;
+				}
+
+				public string TryToGetAsMarkerId()
+				{
+					if ((_stringContentBuilder.Length == 0) || _contentIsTooLongToBeMarkerId)
+						return null;
+
+					var stringContent = _stringContentBuilder.ToString();
+					return _markerIds.Contains(stringContent) ? stringContent : null;
+				}
+
+				public IEnumerator<Element> GetEnumerator()
+				{
+					return _elements.GetEnumerator();
+				}
+				IEnumerator IEnumerable.GetEnumerator()
+				{
+					return GetEnumerator();
+				}
 			}
 		}
 
