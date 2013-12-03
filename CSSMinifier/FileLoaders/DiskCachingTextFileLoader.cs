@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
@@ -97,33 +98,36 @@ namespace CSSMinifier.FileLoaders
 				{
 					_logger.LogIgnoringAnyError(LogLevel.Error, () => "DiskCachingTextFileLoader.Load: Error loading content - " + e.Message);
 					if ((e is InvalidCacheFileFormatException) && (_invalidContentBehaviour == InvalidContentBehaviourOptions.Delete))
-					{
-						try
 						{
-							cacheFile.Delete();
+							try
+							{
+								cacheFile.Delete();
+							}
+							catch (Exception invalidFileContentDeleteException)
+							{
+								_logger.LogIgnoringAnyError(
+									LogLevel.Warning,
+									() => "DiskCachingTextFileLoader.Add: Unable to delete cache file with invalid contents - " + invalidFileContentDeleteException.Message,
+									invalidFileContentDeleteException
+								);
+								if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+									throw;
+							}
 						}
-						catch (Exception invalidFileContentDeleteException)
-						{
-							_logger.LogIgnoringAnyError(
-								LogLevel.Warning,
-								() => "DiskCachingTextFileLoader.Add: Unable to delete cache file with invalid contents - " + invalidFileContentDeleteException.Message,
-								invalidFileContentDeleteException
-							);
-							if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
-								throw;
-						}
-					}
-					if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
-						throw;
+						if (_errorBehaviour == ErrorBehaviourOptions.LogAndRaiseException)
+							throw;
 					return null;
 				}
 			}
 
 			// Do the work and cache the result
+			var timer = new Stopwatch();
+			timer.Start();
 			var content = _contentLoader.Load(relativePath);
+			timer.Stop();
 			try
 			{
-				File.WriteAllText(cacheFile.FullName, GetFileContentRepresentation(content));
+				File.WriteAllText(cacheFile.FullName, GetFileContentRepresentation(content, timer.ElapsedMilliseconds));
 			}
 			catch (Exception e)
 			{
@@ -144,19 +148,22 @@ namespace CSSMinifier.FileLoaders
 		/// <summary>
 		/// This is only exposed for unit testing. This will throw an exception if unable to generate the content, it will never return null or a blank string.
 		/// </summary>
-		public static string GetFileContentRepresentation(TextFileContents contents)
+		public static string GetFileContentRepresentation(TextFileContents contents, long millisecondsTakenToGenerate)
 		{
 			if (contents == null)
 				throw new ArgumentNullException("contents");
+			if (millisecondsTakenToGenerate < 0)
+				throw new ArgumentOutOfRangeException("millisecondsTakenToGenerate", "may not be a negative value");
 
 			var contentBuilder = new StringBuilder();
 			contentBuilder.AppendFormat(
-				"/*{0}:{1}:{2}*/{3}",
+				"/*{0}:{1}:{2}:{3}ms*/{4}",
 				contents.RelativePath.Length.ToString(
 					new string('0', int.MaxValue.ToString().Length) // Pad out the length to the number of digits required to display int.MaxValue
 				),
 				contents.RelativePath,
 				contents.LastModified.ToString(LastModifiedDateFormat),
+				Math.Min(millisecondsTakenToGenerate, 99999).ToString("00000"),
 				Environment.NewLine
 			);
 			contentBuilder.Append(contents.Content);
@@ -202,6 +209,19 @@ namespace CSSMinifier.FileLoaders
 			DateTime lastModified;
 			if (!DateTime.TryParseExact(new string(modifiedDateBuffer), LastModifiedDateFormat, null, DateTimeStyles.None, out lastModified))
 				throw new InvalidCacheFileFormatException("Invalid content (LastModifiedDate format)");
+
+			var processTimeSeparatorBuffer = new char[1];
+			if ((reader.ReadBlock(processTimeSeparatorBuffer, 0, processTimeSeparatorBuffer.Length) < processTimeSeparatorBuffer.Length) || (processTimeSeparatorBuffer[0] != ':'))
+				throw new InvalidCacheFileFormatException("Invalid content (LastModifiedDate:ProcessTime SeparatorBuffer)");
+			var processTimeValueBuffer = new char[maxValueLength];
+			if (reader.ReadBlock(processTimeValueBuffer, 0, 5) < 5)
+				throw new InvalidCacheFileFormatException("Invalid content (process time length)");
+			int processTimeInMs;
+			if (!int.TryParse(new string(processTimeValueBuffer), out processTimeInMs))
+				throw new InvalidCacheFileFormatException("Invalid content (process time content)");
+			var processTimeUnitsBuffer = new char[2];
+			if ((reader.ReadBlock(processTimeUnitsBuffer, 0, processTimeUnitsBuffer.Length) < processTimeUnitsBuffer.Length) || (processTimeUnitsBuffer[0] != 'm') || (processTimeUnitsBuffer[1] != 's'))
+				throw new InvalidCacheFileFormatException("Invalid content (process time units)");
 
 			var closeCommentBuffer = new char[2];
 			if ((reader.ReadBlock(closeCommentBuffer, 0, closeCommentBuffer.Length) < closeCommentBuffer.Length) || (closeCommentBuffer[0] != '*') || (closeCommentBuffer[1] != '/'))
