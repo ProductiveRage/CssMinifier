@@ -20,7 +20,7 @@ namespace UnitTests
 				".Woo{color:black}"
 			);
 
-			var contentRepresentation = DiskCachingTextFileLoader.GetFileContentRepresentation(source);
+			var contentRepresentation = DiskCachingTextFileLoader.GetFileContentRepresentation(source, 68);
 			
 			TextFileContents copy;
 			using (var reader = new StringReader(contentRepresentation))
