@@ -360,11 +360,16 @@ namespace CSSMinifier.FileLoaders
 					_elements.Add(element);
 					if (!_contentIsTooLongToBeMarkerId)
 					{
-						var elementContent = element.ToCSS(new Env());
-						if (_stringContentBuilder.Length == 0)
-							elementContent = elementContent.Trim();
-						_stringContentBuilder.Append(elementContent);
-						if (_stringContentBuilder.Length > _greatestMarkerIdLength)
+						var elementCombinator = element.Combinator.Value;
+						if ((elementCombinator != " ") || (_stringContentBuilder.Length == 0))
+						{
+							// If there is no content yet and the combinator for the current element is a space then ignore it, otherwise we may
+							// end up building a selector segment with a leading space, which will prevent it from being matched to a marker id
+							_stringContentBuilder.Append(elementCombinator);
+						}
+						_stringContentBuilder.Append(element.Value);
+
+						if (_stringContentBuilder.Length > _markerIdLookup.GreatestMarkerIdLength)
 							_contentIsTooLongToBeMarkerId = true;
 					}
 				}
