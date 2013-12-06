@@ -66,7 +66,7 @@ namespace CSSMinifier.FileLoaders.Factories
 			if (_sourceMappingMarkerInjection == SourceMappingMarkerInjectionOptions.Inject)
 			{
 				singleFileLoader = new LessCssLineNumberingTextFileLoader(
-					new LessCssCommentRemovingTextFileLoader(_contentLoader),
+					new LessCssCommentRemovingTextFileLoader(singleFileLoader),
 					sourceMappingMarkerIdGenerator.MarkerGenerator,
 					selector => selector != scopingHtmlTagReplaceString // Don't insert marker ids on wrapper selectors that will be removed
 				);
