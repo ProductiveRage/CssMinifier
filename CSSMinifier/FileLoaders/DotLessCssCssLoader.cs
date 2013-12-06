@@ -278,10 +278,10 @@ namespace CSSMinifier.FileLoaders
 							}
 
 							// We're potentially combining the elements from several distinct selectors into one long selector here, so ensure that
-							// when elements from different selectors are combined that the combinator between the end of one selector and the start
-							// of the next is always a space
+							// when elements from different selectors are combined that there is always some combinator character between them (a
+							// blank string combinator will not work)
 							Element elementToAdd;
-							if (isFirstElementInSelector && allElementInSelectorBuffer.Any())
+							if (isFirstElementInSelector && (element.Combinator.Value == "") && allElementInSelectorBuffer.Any())
 								elementToAdd = new Element(new Combinator(" "), element.Value);
 							else
 								elementToAdd = element;
