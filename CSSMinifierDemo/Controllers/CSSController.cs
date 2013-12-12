@@ -76,8 +76,8 @@ namespace CSSMinifierDemo.Controllers
 			}
 
 			// In the interests of compatability with this generic example project, we'll use the DefaultNonCachedLessCssLoaderFactory which will enable LESS compilation,
-			// import-flattening and minification but doesn't support the advanced features that the EnhancedNonCachedLessCssLoaderFactory enables such as psuedo-source-
-			// mapping, media-query-grouping and others (see comments in the EnhancedNonCachedLessCssLoaderFactory for more information)
+			// import-flattening, minification and pseudo-source-mapping but doesn't support the advanced features that the EnhancedNonCachedLessCssLoaderFactory does
+			// such as media-query-grouping and scope-restricting html-tag stripping (see comments in the EnhancedNonCachedLessCssLoaderFactory for more information)
 			var cssLoader = (new DefaultNonCachedLessCssLoaderFactory(Server)).Get();
 			
 			// Layers of caching are added to persist the processed content in memory and on disk (last-modified-date checking is incorporated so that cache entries are
