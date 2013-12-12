@@ -8,7 +8,7 @@ namespace CSSMinifier.FileLoaders.Factories
 {
 	/// <summary>
 	/// This will generate a stylesheet loader that will flatten all import statements, so long as they reference imports in the same location as the source file, compile
-	/// LESS to CSS and minify the results
+	/// LESS to CSS, minify the results, and inject pseudo id selectors that indicate which source file and line number that each style block originated (eg. "#test.css_123")
 	/// </summary>
 	public class DefaultNonCachedLessCssLoaderFactory : IGenerateCssLoaders
 	{
