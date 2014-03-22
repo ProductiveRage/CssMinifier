@@ -4,6 +4,17 @@
         <name>CSSParser</name>
     </assembly>
     <members>
+        <member name="T:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters">
+            <summary>
+            This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances
+            </summary>
+        </member>
+        <member name="M:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters.GetStrings(CSSParser.StringNavigators.IWalkThroughStrings,CSSParser.ContentProcessors.CharacterProcessors.IProcessCharacters)">
+            <summary>
+            This will never return null nor a set containing any null references. It will throw an exception for null contentWalker or contentProcessor
+            references or it the processing failed.
+            </summary>
+        </member>
         <member name="M:CSSParser.StringNavigators.IWalkThroughStrings.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
             This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
@@ -22,7 +33,55 @@
             This will never return null
             </summary>
         </member>
-        <member name="M:CSSParser.StringNavigators.StringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
+        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.IGenerateCharacterProcessors.Get``1(System.Object[])">
+            <summary>
+            This will never return null, it will throw an exception if unable to satisfy the request
+            </summary>
+        </member>
+        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.Get``1(System.Object[])">
+            <summary>
+            This will never return null, it will throw an exception if unable to satisfy the request
+            </summary>
+        </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Type">
+            <summary>
+            This will never be null
+            </summary>
+        </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Args">
+            <summary>
+            This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
+            </summary>
+        </member>
+        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings_Extensions.DoesCurrentContentMatch(CSSParser.StringNavigators.IWalkThroughStrings,System.String)">
+            <summary>
+            This is a convenience method signature onto DoesCurrentContentMatch where a null optionalComparer is passed (meaning precise matching is required)
+            </summary>
+        </member>
+        <member name="F:CSSParser.ContentProcessors.CharacterCategorisationOptions.StylePropertyColon">
+            <summary>
+            This is the colon between a Style Property and Value (not any colons that may exist in a media query, for example)
+            </summary>
+        </member>
+        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.#ctor(CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent,System.Int32,System.Collections.Generic.List{System.Char})">
+            <summary>
+            All instances returned from requests to the Next property will share the same TextReaderWithReadAheadEvent instance and use this as the
+            synchronisation object when any operations that must be thread safe will occur. This includes any calls to Read since it must be guaranteed
+            that each Read call can transmit the read character(s) to any TextReaderStringNavigator instances that are lagging behind to ensure that
+            their catchUpQueue is complete. A lock must also be obtained any time that a new TextReaderStringNavigator is created that shares the
+            TextReaderWithReadAheadEvent instance since its constructor will register with the ReadAhead event and mustn't miss any data from Read requests
+            that may occur during the class' instantiation. By extension a lock must be obtained any time that the catchUpQueue is accessed (either to
+            retrieve data or to change the contents) since its contents may be changed where the ReadAhead subscription is processed which may be
+            across multiple threads. The catchUpQueue's purpose is to allow instances of TextReaderStringNavigator that lag behind the wrapped
+            TextReaderWithReadAheadEvent to return CurrentCharacter data without having to query the TextReaderWithReadAheadEvent (which won't be able
+            to help since it has progressed past the TextReaderStringNavigator's position). This mechanism can't prevent the source TextReader from being
+            progressed by another object with a reference to the TextReader but it does guarantee that all of the TextReaderStringNavigator instances will
+            have data consistent with the other TextReaderStringNavigator instances at all times. The TextReaderWithReadAheadEvent being private is an
+            extra layer of insurance that its Read method will not be called without the proper locks in place and should help ensure that a reference
+            to TextReaderWithReadAheadEvents can not be leaked out which could risk deadlocks as they are used as the synchronisation object.
+            </summary>
+        </member>
+        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
             This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
             the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
@@ -30,19 +89,37 @@
             blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
-        <member name="P:CSSParser.StringNavigators.StringNavigator.CurrentCharacter">
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.CurrentCharacter">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
-        <member name="P:CSSParser.StringNavigators.StringNavigator.Next">
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.Next">
+            <summary>
+            This will never return null
+            </summary>
+        </member>
+        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent.ReadAheadEventArgs.FromPosition">
+            <summary>
+            This will always be zero or greater
+            </summary>
+        </member>
+        <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
+            <summary>
+            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
+            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
+            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
+            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
+            </summary>
+        </member>
+        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.CurrentCharacter">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
-        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.IGenerateCharacterProcessors.Get``1(System.Object[])">
+        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.Next">
             <summary>
-            This will never return null, it will throw an exception if unable to satisfy the request
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
         <member name="T:CSSParser.TextReaderNavigators.WeakEventSource`1">
@@ -87,11 +164,6 @@
             This will never be null
             </summary>
         </member>
-        <member name="F:CSSParser.ContentProcessors.CharacterCategorisationOptions.StylePropertyColon">
-            <summary>
-            This is the colon between a Style Property and Value (not any colons that may exist in a media query, for example)
-            </summary>
-        </member>
         <member name="P:CSSParser.ContentProcessors.StringProcessors.CategorisedCharacterString.Value">
             <summary>
             This will never be null or an empty string
@@ -102,31 +174,7 @@
             This is the location of the start of the string in the source data
             </summary>
         </member>
-        <member name="T:CSSParser.ContentProcessors.CharacterProcessors.QuotedSegment">
-            <summary>
-            This may be a quoted section of a property value or of an attribute selector (this will be determined by the characterCategorisation
-            passed to the constructor)
-            </summary>
-        </member>
-        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.#ctor(CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent,System.Int32,System.Collections.Generic.List{System.Char})">
-            <summary>
-            All instances returned from requests to the Next property will share the same TextReaderWithReadAheadEvent instance and use this as the
-            synchronisation object when any operations that must be thread safe will occur. This includes any calls to Read since it must be guaranteed
-            that each Read call can transmit the read character(s) to any TextReaderStringNavigator instances that are lagging behind to ensure that
-            their catchUpQueue is complete. A lock must also be obtained any time that a new TextReaderStringNavigator is created that shares the
-            TextReaderWithReadAheadEvent instance since its constructor will register with the ReadAhead event and mustn't miss any data from Read requests
-            that may occur during the class' instantiation. By extension a lock must be obtained any time that the catchUpQueue is accessed (either to
-            retrieve data or to change the contents) since its contents may be changed where the ReadAhead subscription is processed which may be
-            across multiple threads. The catchUpQueue's purpose is to allow instances of TextReaderStringNavigator that lag behind the wrapped
-            TextReaderWithReadAheadEvent to return CurrentCharacter data without having to query the TextReaderWithReadAheadEvent (which won't be able
-            to help since it has progressed past the TextReaderStringNavigator's position). This mechanism can't prevent the source TextReader from being
-            progressed by another object with a reference to the TextReader but it does guarantee that all of the TextReaderStringNavigator instances will
-            have data consistent with the other TextReaderStringNavigator instances at all times. The TextReaderWithReadAheadEvent being private is an
-            extra layer of insurance that its Read method will not be called without the proper locks in place and should help ensure that a reference
-            to TextReaderWithReadAheadEvents can not be leaked out which could risk deadlocks as they are used as the synchronisation object.
-            </summary>
-        </member>
-        <member name="M:CSSParser.TextReaderNavigators.TextReaderStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
+        <member name="M:CSSParser.StringNavigators.StringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
             <summary>
             This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
             the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
@@ -134,19 +182,14 @@
             blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
             </summary>
         </member>
-        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.CurrentCharacter">
+        <member name="P:CSSParser.StringNavigators.StringNavigator.CurrentCharacter">
             <summary>
             This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
-        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.Next">
+        <member name="P:CSSParser.StringNavigators.StringNavigator.Next">
             <summary>
-            This will never return null
-            </summary>
-        </member>
-        <member name="P:CSSParser.TextReaderNavigators.TextReaderStringNavigator.TextReaderWithReadAheadEvent.ReadAheadEventArgs.FromPosition">
-            <summary>
-            This will always be zero or greater
+            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
         <member name="T:CSSParser.Parser">
@@ -212,17 +255,6 @@
             that aren't separated by whitespace will be combined into one string containing those multiple braces).
             </summary>
         </member>
-        <member name="T:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters">
-            <summary>
-            This will use IWalkThroughStrings and IProcessCharacters to generate a set of CategorisedCharacterString instances
-            </summary>
-        </member>
-        <member name="M:CSSParser.ContentProcessors.StringProcessors.ICollectStringsOfProcessedCharacters.GetStrings(CSSParser.StringNavigators.IWalkThroughStrings,CSSParser.ContentProcessors.CharacterProcessors.IProcessCharacters)">
-            <summary>
-            This will never return null nor a set containing any null references. It will throw an exception for null contentWalker or contentProcessor
-            references or it the processing failed.
-            </summary>
-        </member>
         <member name="T:CSSParser.ContentProcessors.CharacterProcessors.MediaQuerySegment">
             <summary>
             Once we're in a media query section, we don't leave it until we hit the open brace of the section it refers to (so don't, for example, allow any colons
@@ -234,49 +266,16 @@
             This will never return null, it will throw an exception if unable to satisfy the request
             </summary>
         </member>
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.ISegment.Content">
+            <summary>
+            This will never be null
+            </summary>
+        </member>
         <member name="T:CSSParser.ContentProcessors.CharacterProcessors.BracketedSelectorSegment">
             <summary>
             This will likely be an attribute selector (eg. the "[type='text']" of "input[type='text']") or the argument list of a LESS mixin. The
             entire content will be identified as CharacterCategorisationOptions.SelectorOrStyleProperty, such as whitespace, quoted sections (but
             not comments - they will still be identified as acterCategorisationOptions.Comment).
-            </summary>
-        </member>
-        <member name="M:CSSParser.StringNavigators.IWalkThroughStrings_Extensions.DoesCurrentContentMatch(CSSParser.StringNavigators.IWalkThroughStrings,System.String)">
-            <summary>
-            This is a convenience method signature onto DoesCurrentContentMatch where a null optionalComparer is passed (meaning precise matching is required)
-            </summary>
-        </member>
-        <member name="M:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.Get``1(System.Object[])">
-            <summary>
-            This will never return null, it will throw an exception if unable to satisfy the request
-            </summary>
-        </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Type">
-            <summary>
-            This will never be null
-            </summary>
-        </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.Factories.CachingCharacterProcessorsFactory.RequestData.Args">
-            <summary>
-            This will never be null but there is nothing to prevent it from containing any nulls, nor being an empty set
-            </summary>
-        </member>
-        <member name="M:CSSParser.StringNavigators.GoneTooFarStringNavigator.DoesCurrentContentMatch(System.String,System.Collections.Generic.IEqualityComparer{System.Char})">
-            <summary>
-            This will return true if the content is at least as long as the specified value string and if the next n characters (where n is the length of
-            the value string) correspond to each of the value string's characters. This testing will be done according to the optionalComparer if non-null
-            and will apply a simple char comparison (precise) match if a null optionalComparer is specified. An exception will be raised for a null or
-            blank value. If there is insufficient content available to match the length of the value argument then false will be returned.
-            </summary>
-        </member>
-        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.CurrentCharacter">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
-            </summary>
-        </member>
-        <member name="P:CSSParser.StringNavigators.GoneTooFarStringNavigator.Next">
-            <summary>
-            This return null if the current location in the string has no content (eg. anywhere on an empty string or past the end of a non-empty string)
             </summary>
         </member>
         <member name="T:CSSParser.ContentProcessors.StringProcessors.ProcessedCharactersGrouper">
@@ -295,14 +294,15 @@
             references or it the processing failed.
             </summary>
         </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.ISegment.Content">
+        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
             <summary>
             This will never be null
             </summary>
         </member>
-        <member name="P:CSSParser.ContentProcessors.CharacterProcessors.CharacterProcessorResult.NextProcessor">
+        <member name="T:CSSParser.ContentProcessors.CharacterProcessors.QuotedSegment">
             <summary>
-            This will never be null
+            This may be a quoted section of a property value or of an attribute selector (this will be determined by the characterCategorisation
+            passed to the constructor)
             </summary>
         </member>
     </members>
