@@ -65,7 +65,7 @@ The **LessCssOpeningHtmlTagRenamer** and **DotLessCssCssLoader** classes can be 
         }
     }
 
-then the value "@color" will will not be overwritten in the parent scope, if it exists, but this is compiled to
+then the value "\@color" will will not be overwritten in the parent scope, if it exists, but this is compiled to
 
     html div.header{color:#4D926F}
 
