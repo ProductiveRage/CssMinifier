@@ -1,6 +1,6 @@
 # On-the-fly CSS Minification and Combination
 
-The classes here are intended to enable the easy construction of ASP.Net MVC stylesheet controllers that will recursively combine @import statements into a single file (respecting any media queries that are part of the import) and minifying the content, processing as [DotLessCss](http://http://www.dotlesscss.org) if a stylesheet with extension ".less" is requested. For example -
+The classes here are intended to enable the easy construction of ASP.Net MVC stylesheet controllers that will recursively combine import statements into a single file (respecting any media queries that are part of the import) and minifying the content, processing as [DotLessCss](http://http://www.dotlesscss.org) if a stylesheet with extension ".less" is requested. For example -
 
     public class CSSController : Controller
     {
@@ -65,7 +65,7 @@ The **LessCssOpeningHtmlTagRenamer** and **DotLessCssCssLoader** classes can be 
         }
     }
 
-then the value "\@color" will will not be overwritten in the parent scope, if it exists, but this is compiled to
+then the value "color" will will not be overwritten in the parent scope, if it exists, but this is compiled to
 
     html div.header{color:#4D926F}
 
