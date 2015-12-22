@@ -132,7 +132,21 @@ namespace CSSMinifier.FileLoaders
 			timer.Stop();
 			try
 			{
-				File.WriteAllText(cacheFile.FullName, GetFileContentRepresentation(content, timer.ElapsedMilliseconds));
+				// 2015-12-22 DWR: The contentLoader may have a sensible-seeming LastModified-retrieval mechanism of take-largest-last-modified-date-from-the-source-
+				// files but we want to ignore that value if it is less recent than the value that the lastModifiedDateRetriever reference gave us, otherwise the
+				// cached data will be useless. It's easier to explain with an example - if Style1.css, Style11.css, Style12.css and Style2.css are all in the same
+				// folder and Style1.css imports Style11.css and Style12.css while Style11.css, Style12.css and Style.css import nothing, the disk-cache data for
+				// Style1 will be useless if Style2 is updated and the lastModifiedDateRetriever is a SingleFolderLastModifiedDateRetriever. This is because the
+				// lastModifiedDateRetriever will return the last-modified date of Style2, which will always be more recent than any of Style1, Style11, Style12
+				// last-modified values but the last-modified of the flattened-Style1.css content will only consider the last-modified dates of the three files
+				// that it pulls data from. It is not as accurate to claim that the flattened-Style1.css content has the last-modified date of Style2 but it's
+				// the only way to get consistent dates, which are required for the caching to work effectively.
+				if (lastModifiedDateOfSource > content.LastModified)
+					content = new TextFileContents(content.RelativePath, lastModifiedDateOfSource, content.Content);
+				File.WriteAllText(
+					cacheFile.FullName,
+					GetFileContentRepresentation(content, timer.ElapsedMilliseconds)
+				);
 			}
 			catch (Exception e)
 			{
