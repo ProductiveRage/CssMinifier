@@ -41,12 +41,10 @@ namespace CSSMinifier.FileLoaders.LastModifiedDateRetrievers
 			if (string.IsNullOrWhiteSpace(relativePath))
 				throw new ArgumentException("Null/blank relativePath specified");
 
-			var file = new FileInfo(
-				_relativePathMapper.MapPath(relativePath)
-			);
-			if (!file.Exists)
-				throw new ArgumentException("Invalid relativePath - file does not exist: " + relativePath);
-
+			// 2016-10-27 DWR: It doesn't actually matter if this file exists, we can still access its Directory and then look for the most recent last-modified
+			// date (note checking for this particular file has a benefit, it will allow us to create pseudo files such as a load-all-stylesheets-in-this-folder
+			// relativePath that doesn't relate to a physical file)
+			var file = new FileInfo(_relativePathMapper.MapPath(relativePath));
 			return _extensionRestrictions
 				.SelectMany(extension => file.Directory.GetFiles("*." + extension))
 				.Max(f => f.LastWriteTime);
