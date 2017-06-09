@@ -85,8 +85,8 @@ namespace CSSMinifier.FileLoaders
 			);
 			var markerIdLookup = new MarkerIdLookup(_markerIdRetriever());
 			engine.Plugins = new[] { 
-                new SelectorRewriterVisitorPluginConfigurator(markerIdLookup, _optionalTagNameToRemove)
-            };
+				new SelectorRewriterVisitorPluginConfigurator(markerIdLookup, _optionalTagNameToRemove)
+			};
 			return new TextFileContents(
 				initialFileContents.RelativePath,
 				initialFileContents.LastModified,
@@ -242,8 +242,6 @@ namespace CSSMinifier.FileLoaders
 				if (markerIdLookup == null)
 					throw new ArgumentNullException("markerIdLookup");
 
-				var currentElementContent = new CombinedElementContent(markerIdLookup);
-
 				var markerIdsAccountedFor = new HashSet<string>();
 				var combinedPaths = new List<Selector>();
 				foreach (var path in paths)
@@ -251,8 +249,7 @@ namespace CSSMinifier.FileLoaders
 					if (path == null)
 						throw new ArgumentException("Null reference encountered in paths set");
 
-					currentElementContent.Clear();
-
+					var currentElementContent = new CombinedElementContent(markerIdLookup);
 					var allElementInSelectorBuffer = new List<Element>();
 					Element[] markerIdElements = null;
 					var selectorShouldBeIgnored = false;
@@ -361,14 +358,13 @@ namespace CSSMinifier.FileLoaders
 					if (!_contentIsTooLongToBeMarkerId)
 					{
 						var elementCombinator = element.Combinator.Value;
-						if ((elementCombinator != " ") || (_stringContentBuilder.Length == 0))
+						if ((_stringContentBuilder.Length > 0) || elementCombinator.Any(c => !char.IsWhiteSpace(c)))
 						{
 							// If there is no content yet and the combinator for the current element is a space then ignore it, otherwise we may
 							// end up building a selector segment with a leading space, which will prevent it from being matched to a marker id
 							_stringContentBuilder.Append(elementCombinator);
 						}
 						_stringContentBuilder.Append(element.Value);
-
 						if (_stringContentBuilder.Length > _markerIdLookup.GreatestMarkerIdLength)
 							_contentIsTooLongToBeMarkerId = true;
 					}
