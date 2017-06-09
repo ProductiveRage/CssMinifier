@@ -32,3 +32,6 @@ _ReSharper*/
 *.[Pp]ublish.xml
 *.resharper
 *.orig
+
+[Pp]ackages/
+.vs/
