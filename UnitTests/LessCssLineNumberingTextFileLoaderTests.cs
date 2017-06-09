@@ -69,5 +69,47 @@ namespace UnitTests
 				lineNumberInjectingContentLoader.Load(filename).Content
 			);
 		}
+
+		[Fact]
+		public void FontFaceMustNotBeIdentifiedAsSelectorToInjectMarkerIdBefore()
+		{
+			var content = "body\n{\n  @font-face { }\n}\n";
+			var expected = "#test.css_1,body\n{\n  @font-face { }\n}\n";
+
+			var filename = "test.css";
+			var lineNumberInjectingContentLoader = new LessCssLineNumberingTextFileLoader(
+				new FixedListCssContentLoader(
+					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
+				),
+				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
+				null // optionalSelectorMarkerInsertionCondition
+			);
+
+			Assert.Equal(
+				expected,
+				lineNumberInjectingContentLoader.Load(filename).Content
+			);
+		}
+
+		[Fact]
+		public void FontFaceMustNotBeIdentifiedAsSelectorToInjectMarkerIdBeforeWhenItIsTheFirstContent()
+		{
+			var content = "@font-face { }";
+			var expected = "@font-face { }";
+
+			var filename = "test.css";
+			var lineNumberInjectingContentLoader = new LessCssLineNumberingTextFileLoader(
+				new FixedListCssContentLoader(
+					new TextFileContents(filename, new DateTime(2013, 2, 5, 21, 18, 0), content)
+				),
+				(relativePath, lineNumber) => "#test.css_" + lineNumber + ",",
+				null // optionalSelectorMarkerInsertionCondition
+			);
+
+			Assert.Equal(
+				expected,
+				lineNumberInjectingContentLoader.Load(filename).Content
+			);
+		}
 	}
 }

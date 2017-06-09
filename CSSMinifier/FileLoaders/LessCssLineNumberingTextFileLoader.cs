@@ -236,9 +236,14 @@ namespace CSSMinifier.FileLoaders
 
 			public AnalysisResult Analyse(char currentCharacter, char? previousCharacter)
 			{
-				// If there is no more content to process then this must be a marker insertion point since we're in a declaration header
+				// If there is no more content to process then this must be a marker insertion point since we're in a declaration header (2017-06-09 DWR: The first content
+				// may be a @font-face declaration so check _declarationHeaderTerminators_NonMarkerInserting first since we're not ALWAYS going to want a marker here)
 				if (previousCharacter == null)
+				{
+					if (_declarationHeaderTerminators_NonMarkerInserting.Contains(currentCharacter))
+						return AnalysisResult.NoInsertion(new StandardContentAnalyser());
 					return AnalysisResult.InsertBeforeCurrentCharacter(_declarationHeaderLineNumberOffset, new StandardContentAnalyser());
+				}
 
 				if (_declarationHeaderTerminators_MarkerInserting.Contains(currentCharacter))
 				{
