@@ -1,8 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSSMinifierDemo", "CSSMinifierDemo\CSSMinifierDemo.csproj", "{4053633E-F665-439A-AD66-257837CE7D07}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSSMinifier", "CSSMinifier\CSSMinifier.csproj", "{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}"
@@ -10,21 +10,33 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4053633E-F665-439A-AD66-257837CE7D07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4053633E-F665-439A-AD66-257837CE7D07}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4053633E-F665-439A-AD66-257837CE7D07}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4053633E-F665-439A-AD66-257837CE7D07}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{CAC63B5F-2EC5-4E28-9C38-65735C2F4610}.Release|x86.ActiveCfg = Release|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
