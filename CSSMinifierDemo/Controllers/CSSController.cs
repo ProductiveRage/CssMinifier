@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 using CSSMinifier.Caching;
 using CSSMinifier.FileLoaders;
