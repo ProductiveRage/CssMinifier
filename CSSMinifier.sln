@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSSMinifier", "CSSMinifier\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSSMinifierDemo", "CSSMinifierDemo\CSSMinifierDemo.csproj", "{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,18 @@ Global
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{1D3F0686-E1EC-4B22-AA25-9B3260E04FB7}.Release|x86.ActiveCfg = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Debug|x86.Build.0 = Debug|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|x86.ActiveCfg = Release|Any CPU
+		{6407912B-0C7E-4B1A-9AAC-C95E85F14DAC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
