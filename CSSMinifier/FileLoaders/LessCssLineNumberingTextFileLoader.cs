@@ -83,7 +83,7 @@ namespace CSSMinifier.FileLoaders
 				);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertAfterCurrentCharacter)
 				{
-					if ((_optionalSelectorMarkerInsertionCondition == null) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
+					if (IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
 					selectorBuilder.Clear();
 				}
@@ -91,7 +91,7 @@ namespace CSSMinifier.FileLoaders
 				selectorBuilder.Insert(0, currentCharacter);
 				if (analysisResult.MarkerInsertionType == MarkerInsertionTypeOptions.InsertBeforeCurrentCharacter)
 				{
-					if ((_optionalSelectorMarkerInsertionCondition == null) || IsAcceptableToInsertHere(selectorBuilder.ToString()))
+					if (IsAcceptableToInsertHere(selectorBuilder.ToString()))
 						stringBuilder.Insert(0, _markerGenerator(relativePath, lineNumber + analysisResult.MarkerLineNumberOffset) ?? "");
 					selectorBuilder.Clear();
 				}
@@ -104,27 +104,29 @@ namespace CSSMinifier.FileLoaders
 		}
 
 		/// <summary>
-		/// If an optionalSelectorMarkerInsertionCondition has been specified, then pass it the selector content from the point at which a marker insertion is
-		/// possible (an optionalSelectorMarkerInsertionCondition may be passed in that prevents markers from being insert into scope-restricting html selectors
-		/// in order to reduce the nesting of marker ids, for example)
+		/// Once a place has been identified that a marker should potentially be inserted, perform some final tests - if there is an optionalSelectorMarkerInsertionCondition
+		/// then that will be considered and some other edge cases will be handled (for example, within a @keyframes rule we don't want to insert any markers because the
+		/// content will be invalid - the best solution would be to consider the content as a hierarchical structure and to look at parent selectors to see if they are
+		/// @keyframes data but I'll settle for a reasonable approximation of what I want to do; https://developer.mozilla.org/en/docs/Web/CSS/@keyframes indicates that
+		/// the format of the frames are "from", "to" and "{x}%" and those aren't valid as genuine selectors anywhere else so we can happily identify them as special
+		/// cases that apply to @keyframes only). Note: An optionalSelectorMarkerInsertionCondition may be passed in that prevents markers from being inserted into
+		/// scope-restricting html selectors in order to reduce the nesting of marker ids, for example).
 		/// </summary>
 		private bool IsAcceptableToInsertHere(string styleContentAtInsertionPoint)
 		{
 			if (styleContentAtInsertionPoint == null)
 				throw new ArgumentNullException("styleContentAtInsertionPoint");
 
-			if (_optionalSelectorMarkerInsertionCondition == null)
-				return true;
-
-			return _optionalSelectorMarkerInsertionCondition(
-				string.Join(
-					"",
-					Parser.ParseLESS(styleContentAtInsertionPoint)
+			var selectorContent = string.Join("",
+				Parser.ParseLESS(styleContentAtInsertionPoint)
 						.TakeWhile(c => c.CharacterCategorisation != CharacterCategorisationOptions.OpenBrace)
 						.Where(c => c.CharacterCategorisation == CharacterCategorisationOptions.SelectorOrStyleProperty)
 						.Select(c => c.Value)
-				)
 			);
+			if ((selectorContent == "from") || (selectorContent == "to") || selectorContent.EndsWith("%"))
+				return false;
+
+			return (_optionalSelectorMarkerInsertionCondition == null) || _optionalSelectorMarkerInsertionCondition(selectorContent);
 		}
 
 		private interface IAnalyseCharacters
