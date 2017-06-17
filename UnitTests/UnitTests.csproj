@@ -67,6 +67,7 @@
     <Compile Include="DiskCachingTextFileLoaderTests.cs" />
     <Compile Include="InjectedIdTidyingTextFileLoaderTests.cs" />
     <Compile Include="LessCssCommentRemovingTextFileLoader.cs.cs" />
+    <Compile Include="LessCssKeyFrameScoperTests.cs" />
     <Compile Include="LessCssLineNumberingTextFileLoaderTests.cs" />
     <Compile Include="LessCssOpeningHtmlTagRenamerTests.cs" />
     <Compile Include="MediaQueryGroupingCssLoaderTests.cs" />

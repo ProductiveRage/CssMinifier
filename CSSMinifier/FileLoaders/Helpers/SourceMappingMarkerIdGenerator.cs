@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace CSSMinifier.FileLoaders.Helpers
 {
@@ -9,10 +8,15 @@ namespace CSSMinifier.FileLoaders.Helpers
 	/// This class may be used with the LessCssLineNumberingTextFileLoader, which enables the insertion of arbitrary markers at the starts of selectors - this implementation
 	/// will generate marker ids based on the filename and line number in the source in which the selector that is being added to was found
 	/// </summary>
-	public class SourceMappingMarkerIdGenerator
+	public sealed class SourceMappingMarkerIdGenerator
 	{
-		// We'll leave in any "." characters since we want it to appear like "#ProductDetail.css_123"
-		private static char[] AllowedNonAlphaNumericCharacters = new[] { '_', '-', '.' };
+		private static char[] _allowedNonAlphaNumericCharacters;
+		private static char[] _allowedNonAlphaNumericCharactersPlusPeriod;
+		static SourceMappingMarkerIdGenerator()
+		{
+			_allowedNonAlphaNumericCharacters = new[] { '_', '-', '.' };
+			_allowedNonAlphaNumericCharactersPlusPeriod = _allowedNonAlphaNumericCharacters.Concat(new[] { '.' }).ToArray();
+		}
 
 		private readonly List<string> _insertedMarkers;
 		public SourceMappingMarkerIdGenerator()
@@ -35,37 +39,59 @@ namespace CSSMinifier.FileLoaders.Helpers
 			// we may as well remove that relative path and consider the filename only
 			relativePath = relativePath.Replace("\\", "/").Split('/').Last();
 
+			// We'll leave in any "." characters since we want it to appear like "#ProductDetail.css_123"
+			var relativePathHtmlIdFriendly = TryToGetHtmlIdFriendlyVersion(relativePath, allowPeriod: true);
+			if (relativePathHtmlIdFriendly == null)
+				return "";
+
+			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma (we keep track of the ids
+			// that have been inserted (eg. "test.css_12") but have to return CSS content that may be injected into the start of a selector and so append a
+			// comma to it (eg. "test.css_12,")
+			var markerId = $"#{relativePathHtmlIdFriendly}_{lineNumber}";
+			_insertedMarkers.Add(markerId);
+			return markerId + ",";
+		}
+
+		/// <summary>
+		/// Try to manipulate a string such that it may be used for an html id (stripping or replacing invalid characters, ensuring that it doesn't start with
+		/// a number, etc..) - it may not be possible, in which case null will be returned (this will never return a blank string)
+		/// </summary>
+		public static string TryToGetHtmlIdFriendlyVersion(string value)
+		{
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+
+			return TryToGetHtmlIdFriendlyVersion(value, allowPeriod: false);
+		}
+
+		private static string TryToGetHtmlIdFriendlyVersion(string value, bool allowPeriod)
+		{
+			if (value == null)
+				throw new ArgumentNullException(nameof(value));
+
 			// Make into a html-id-valid form
 			var relativePathHtmlIdFriendly = "";
-			for (var index = 0; index < relativePath.Length; index++)
+			for (var index = 0; index < value.Length; index++)
 			{
-				if (!AllowedNonAlphaNumericCharacters.Contains(relativePath[index]) && !char.IsLetter(relativePath[index]) && !char.IsNumber(relativePath[index]))
+				if (!_allowedNonAlphaNumericCharacters.Contains(value[index]) && !char.IsLetter(value[index]) && !char.IsNumber(value[index]))
 					relativePathHtmlIdFriendly += "_";
 				else
-					relativePathHtmlIdFriendly += relativePath[index];
+					relativePathHtmlIdFriendly += value[index];
 			}
 
 			// Remove any runs of "_" that we've are (presumablY) a result of the above manipulation
 			while (relativePathHtmlIdFriendly.IndexOf("__") != -1)
-				relativePathHtmlIdFriendly = relativePath.Replace("__", "_");
+				relativePathHtmlIdFriendly = value.Replace("__", "_");
 
 			// Ids must start with a letter, so try to find the first letter in the content (if none, then return "" to indicate no insertion required)
 			var startIndexOfLetterContent = relativePathHtmlIdFriendly
 				.Select((character, index) => new { Character = character, Index = index })
 				.FirstOrDefault(c => char.IsLetter(c.Character));
 			if (startIndexOfLetterContent == null)
-				return "";
+				return null;
 
-			// Generate the insertion token such that a new id is added and separated from the real declaration header with a comma (we keep track of the ids
-			// that have been inserted (eg. "test.css_12") but have to return CSS content that may be injected into the start of a selector and so append a
-			// comma to it (eg. "test.css_12,")
-			var markerId = string.Format(
-				"#{0}_{1}",
-				relativePathHtmlIdFriendly.Substring(startIndexOfLetterContent.Index),
-				lineNumber
-			);
-			_insertedMarkers.Add(markerId);
-			return markerId + ",";
+			relativePathHtmlIdFriendly = relativePathHtmlIdFriendly.Substring(startIndexOfLetterContent.Index).Trim();
+			return (relativePathHtmlIdFriendly == "") ? null : relativePathHtmlIdFriendly;
 		}
 
 		public IEnumerable<string> GetInsertedMarkerIds()
