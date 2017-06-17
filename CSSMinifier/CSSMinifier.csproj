@@ -64,6 +64,7 @@
     <Compile Include="FileLoaders\Factories\IGenerateCssLoaders.cs" />
     <Compile Include="FileLoaders\Factories\SourceMappingMarkerInjectionOptions.cs" />
     <Compile Include="FileLoaders\Helpers\SourceMappingMarkerIdGenerator.cs" />
+    <Compile Include="FileLoaders\LessCssKeyFrameScoper.cs" />
     <Compile Include="FileLoaders\LessCssOpeningHtmlTagRenamer.cs" />
     <Compile Include="FileLoaders\DotLessCssCssLoader.cs" />
     <Compile Include="FileLoaders\LessCssCommentRemovingTextFileLoader.cs" />

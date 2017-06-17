@@ -52,18 +52,16 @@ namespace CSSMinifier.FileLoaders.Factories
 		/// </summary>
 		public ITextFileLoader Get()
 		{
-			ITextFileLoader singleFileLoader;
+			ITextFileLoader singleFileLoader = new LessCssKeyFrameScoper(_contentLoader);
 			var sourceMappingMarkerIdGenerator = new SourceMappingMarkerIdGenerator();
 			if (_sourceMappingMarkerInjection == SourceMappingMarkerInjectionOptions.Inject)
 			{
 				singleFileLoader = new LessCssLineNumberingTextFileLoader(
-					new LessCssCommentRemovingTextFileLoader(_contentLoader),
+					new LessCssCommentRemovingTextFileLoader(singleFileLoader),
 					sourceMappingMarkerIdGenerator.MarkerGenerator,
 					null // optionalSelectorMarkerInsertionCondition (null => insert markers for all selectors)
 				);
 			}
-			else
-				singleFileLoader = _contentLoader;
 			return new DotLessCssCssLoader(
 				new SameFolderImportFlatteningCssLoader(
 					singleFileLoader,
