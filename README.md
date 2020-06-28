@@ -1,6 +1,6 @@
 # On-the-fly CSS Minification and Combination
 
-The classes here are intended to enable the easy construction of ASP.Net MVC stylesheet controllers that will recursively combine import statements into a single file (respecting any media queries that are part of the import) and minifying the content, processing as [DotLessCss](http://http://www.dotlesscss.org) if a stylesheet with extension ".less" is requested. For example -
+The classes here are intended to enable the easy construction of ASP.Net MVC stylesheet controllers that will recursively combine import statements into a single file (respecting any media queries that are part of the import) and minifying the content, processing as [DotLessCss](http://www.dotlesscss.org) if a stylesheet with extension ".less" is requested. For example -
 
     public class CSSController : Controller
     {
@@ -27,7 +27,7 @@ accessed by the following routes -
         new { allwithextension = @".*\.(css|less)(/.*)?" }
     );
 
-The CSSController in the full example implementation (in the **CSSMinifierDemo** project in the repository; see the [CSSController](https://bitbucket.org/DanRoberts/cssminifier/src/f4b3050b31f0bb9576c5d317b0a9eebfd7667953/CSSMinifierDemo/Controllers/CSSController.cs) file) only supports combination of stylesheets that are in the same folder* but it incorporates caching to disk and in-memory based on the last-modified-date of files such that there is no delay between updating files and the minified content being re-generated and returned in subsequent requests. It also has full support for returning 304 responses when files have not changed as well as support for applying gzip or deflate compression to returned data.
+The CSSController in the full example implementation (in the **CSSMinifierDemo** project in the repository; see the [CSSController](https://github.com/ProductiveRage/CssMinifier/blob/master/CSSMinifierDemo/Controllers/CSSController.cs) file) only supports combination of stylesheets that are in the same folder* but it incorporates caching to disk and in-memory based on the last-modified-date of files such that there is no delay between updating files and the minified content being re-generated and returned in subsequent requests. It also has full support for returning 304 responses when files have not changed as well as support for applying gzip or deflate compression to returned data.
 
 \* _This is a considered compromise; if stylesheets can import other stylesheets from any arbitrary location, then in order to determine whether any of them have changed - and so cached data should be expired so that the changes may be immediately reflected - processing of the entire import chain would be required. If all imports must be within the same folder then a shortcut can be taken by considering the most recent last-modified-date of any file in that folder. There's a chance that cache entries will be invalidated more often than necessary (if a file that isn't imported into a given stylesheet is updated), but it also means that cache entries will definitely be expired if any file in its import chain is updated. If you disagree with this approach then all behaviour can be changed to use different ITextFileLoader and / or ILastModifiedDateRetriever implementations!_
 
